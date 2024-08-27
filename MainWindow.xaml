@@ -4,49 +4,105 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:CommandRunner"
+        xmlns:helpers="clr-namespace:CommandRunner.Helpers"
+        xmlns:vm="clr-namespace:CommandRunner.ViewModels"
         mc:Ignorable="d"
-        Title="MainWindow" Width="1280" Height="720">
-    <Grid Background="#FF1E1E1E">
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition />
-            <ColumnDefinition Width="5" />
-            <ColumnDefinition />
-            <ColumnDefinition Width="5" />
-            <ColumnDefinition />
-        </Grid.ColumnDefinitions>
+        Title="MainWindow" Height="720" Width="1280">
+
+    <Window.Resources>
+        <vm:MainWindowViewModel x:Key="MainViewModel"/>
+
+        <ContextMenu x:Key="ContainerContextMenu">
+            <MenuItem Header="New Command" Command="{Binding Source={StaticResource MainViewModel}, Path=NewCommandCommand}" CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+            <MenuItem Header="New Container" Command="{Binding Source={StaticResource MainViewModel}, Path=NewContainerCommand}" CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+            <Separator/>
+            <MenuItem Header="Move" Command="{Binding Source={StaticResource MainViewModel}, Path=MoveCommand}" CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+            <MenuItem Header="Delete" Command="{Binding Source={StaticResource MainViewModel}, Path=DeleteCommand}" CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+        </ContextMenu>
+
+        <ContextMenu x:Key="CommandContextMenu">
+            <MenuItem Header="Queue" Command="{Binding Source={StaticResource MainViewModel}, Path=QueueCommand}"/>
+            <Separator/>
+            <MenuItem Header="Move" Command="{Binding Source={StaticResource MainViewModel}, Path=MoveCommand}"/>
+            <MenuItem Header="Delete" Command="{Binding Source={StaticResource MainViewModel}, Path=DeleteCommand}"/>
+        </ContextMenu>
+
+        <ContextMenu x:Key="BackgroundContextMenu">
+            <MenuItem Header="New Command" Command="{Binding Source={StaticResource MainViewModel}, Path=NewCommandCommand}"/>
+            <MenuItem Header="New Container" Command="{Binding Source={StaticResource MainViewModel}, Path=NewContainerCommand}"/>
+        </ContextMenu>
+
+        <HierarchicalDataTemplate x:Key="ContainerTemplate" ItemsSource="{Binding Children}">
+            <TextBlock Text="{Binding Name}" Foreground="LightBlue" FontWeight="Bold">
+                <TextBlock.ContextMenu>
+                    <StaticResource ResourceKey="ContainerContextMenu"/>
+                </TextBlock.ContextMenu>
+            </TextBlock>
+        </HierarchicalDataTemplate>
+
+        <DataTemplate x:Key="CommandTemplate">
+            <TextBlock Text="{Binding Name}" Foreground="#FFCACACA">
+                <TextBlock.ContextMenu>
+                    <StaticResource ResourceKey="CommandContextMenu"/>
+                </TextBlock.ContextMenu>
+            </TextBlock>
+        </DataTemplate>
+        
+        <helpers:SelectionListItemTemplateSelector
+            x:Key="SelectionListItemTemplateSelector"
+            ContainerTemplate="{StaticResource ContainerTemplate}"
+            CommandTemplate="{StaticResource CommandTemplate}"/>
+    </Window.Resources>
+
+    <Window.DataContext>
+        <vm:MainWindowViewModel/>
+    </Window.DataContext>
+
+    <Grid Background="#FF3C3C3C">
         <Grid.RowDefinitions>
-            <RowDefinition Height="2*" />
-            <RowDefinition Height="5" />
-            <RowDefinition Height="3*" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
         </Grid.RowDefinitions>
-        <GridSplitter Grid.Row="0" Grid.Column="1" Width="5" Background="#FF232323" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
-        <GridSplitter Grid.Row="0" Grid.Column="3" Width="5" Background="#FF232323" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
-        <GridSplitter Grid.Row="1" Grid.ColumnSpan="5" Height="5" Background="#FF232323" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
-        <GridSplitter Grid.Row="2" Grid.Column="1" Width="5" Background="#FF232323" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
 
-        <!-- Item List Section -->
-        <Border Grid.Row="0" Grid.Column="0" Margin="10">
-            <TextBlock Text="Item List" Foreground="Gainsboro"/>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <Border Grid.Column="0" Grid.Row="0" Margin="5" BorderThickness="2" Background="#FF323232">
+            <TreeView ItemsSource="{Binding SelectionListItems}" 
+                      Foreground="White" 
+                      BorderThickness="0" 
+                      Background="#FF323232"
+                      ItemTemplateSelector="{StaticResource SelectionListItemTemplateSelector}">
+                <TreeView.ContextMenu>
+                    <StaticResource ResourceKey="BackgroundContextMenu"/>
+                </TreeView.ContextMenu>
+            </TreeView>
         </Border>
 
-        <!-- Command Properties Section -->
-        <Border Grid.Row="0" Grid.Column="2" Margin="10">
-            <TextBlock Text="Command Properties" Foreground="Gainsboro"/>
+        <GridSplitter Grid.Column="1" Grid.Row="0" Width="3" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="#FF404040"/>
+
+        <Border Grid.Column="2" Grid.Row="0" Margin="5" BorderThickness="2" Background="#FF323232">
         </Border>
 
-        <!-- Command Queue Section -->
-        <Border Grid.Row="0" Grid.Column="4" Margin="10">
-            <TextBlock Text="Command Queue" Foreground="Gainsboro"/>
+        <GridSplitter Grid.Column="3" Grid.Row="0" Width="3" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="#FF404040"/>
+
+        <Border Grid.Column="4" Grid.Row="0" Margin="5" BorderThickness="2" Background="#FF323232">
         </Border>
 
-        <!-- Processes Section -->
-        <Border Grid.Row="2" Grid.Column="0" Margin="10">
-            <TextBlock Text="Processes" Foreground="Gainsboro"/>
-        </Border>
+        <GridSplitter Grid.Column="0" Grid.Row="1" Grid.ColumnSpan="5" Height="3" HorizontalAlignment="Stretch" VerticalAlignment="Center" Background="#FF404040"/>
 
-        <!-- Log Section -->
-        <Border Grid.Row="2" Grid.Column="2" Grid.ColumnSpan="3" Margin="3">
-            <TextBox Text="Logs" Foreground="Gainsboro" TextWrapping="Wrap" Background="#FF252525" IsReadOnly="True"/>
+        <Border Grid.Column="0" Grid.Row="2" Grid.ColumnSpan="2" Margin="5" BorderThickness="2" Background="#FF323232">
+        </Border>
+        
+        <GridSplitter Grid.Column="1" Grid.Row="2" Width="3" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="#FF404040"/>
+
+        <Border Grid.Column="2" Grid.Row="2" Grid.ColumnSpan="3" Margin="5" BorderThickness="2" Background="#FF323232">
         </Border>
     </Grid>
 </Window>
