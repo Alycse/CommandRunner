@@ -11,18 +11,50 @@ namespace CommandRunner.ViewModels
     public class MainWindowViewModel : ViewModelBase
     {
         private const string SaveFilePath = "CommandsData.json";
+        private SelectionListCommandViewModel _selectedCommand;
+        private Command _temporaryCommand;
 
         public ObservableCollection<SelectionListItemViewModel> SelectionListItems { get; set; }
 
-        private SelectionListCommandViewModel _selectedCommand;
         public SelectionListCommandViewModel SelectedCommand
         {
             get => _selectedCommand;
             set
             {
-                _selectedCommand = value;
-                OnPropertyChanged(nameof(SelectedCommand));
-                OnPropertyChanged(nameof(IsCommandSelected)); // Notify the UI that IsCommandSelected has changed
+                if (_selectedCommand != value)
+                {
+                    _selectedCommand = value;
+                    if (_selectedCommand != null)
+                    {
+                        // Create a temporary copy of the command
+                        _temporaryCommand = new Command
+                        {
+                            Name = _selectedCommand.Command.Name,
+                            FilePath = _selectedCommand.Command.FilePath,
+                            Argument = _selectedCommand.Command.Argument,
+                            Tags = _selectedCommand.Command.Tags,
+                            CompleteUponExecution = _selectedCommand.Command.CompleteUponExecution,
+                            RemoveFromQueueUponCompletion = _selectedCommand.Command.RemoveFromQueueUponCompletion
+                        };
+                    }
+                    else
+                    {
+                        _temporaryCommand = null;
+                    }
+                    OnPropertyChanged(nameof(SelectedCommand));
+                    OnPropertyChanged(nameof(TemporaryCommand));
+                    OnPropertyChanged(nameof(IsCommandSelected));
+                }
+            }
+        }
+
+        public Command TemporaryCommand
+        {
+            get => _temporaryCommand;
+            set
+            {
+                _temporaryCommand = value;
+                OnPropertyChanged(nameof(TemporaryCommand));
             }
         }
 
@@ -110,8 +142,22 @@ namespace CommandRunner.ViewModels
 
         private void ExecuteSaveCommand(object parameter)
         {
-            // Save the selected command
+            // Update the original command with the temporary properties
+            if (SelectedCommand != null && TemporaryCommand != null)
+            {
+                SelectedCommand.Command.Name = TemporaryCommand.Name;
+                SelectedCommand.Command.FilePath = TemporaryCommand.FilePath;
+                SelectedCommand.Command.Argument = TemporaryCommand.Argument;
+                SelectedCommand.Command.Tags = TemporaryCommand.Tags;
+                SelectedCommand.Command.CompleteUponExecution = TemporaryCommand.CompleteUponExecution;
+                SelectedCommand.Command.RemoveFromQueueUponCompletion = TemporaryCommand.RemoveFromQueueUponCompletion;
+
+                // Update the Name property in the TreeView
+                SelectedCommand.Name = TemporaryCommand.Name;
+            }
+
             SaveAllData();
+            OnPropertyChanged(nameof(SelectedCommand)); // Refresh the binding
         }
 
         private void SaveAllData()
