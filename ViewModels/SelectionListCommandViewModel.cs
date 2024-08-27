@@ -4,6 +4,16 @@ namespace CommandRunner.ViewModels
 {
     public class SelectionListCommandViewModel : SelectionListItemViewModel
     {
-        public Command Command { get; set; }
+        private Command _command;
+
+        public Command Command
+        {
+            get => _command;
+            set
+            {
+                _command = value;
+                OnPropertyChanged(nameof(Command));
+            }
+        }
     }
 }

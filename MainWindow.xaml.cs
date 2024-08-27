@@ -1,5 +1,6 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
+using CommandRunner.ViewModels;
 
 namespace CommandRunner
 {
@@ -8,6 +9,15 @@ namespace CommandRunner
         public MainWindow()
         {
             InitializeComponent();
+        }
+
+        private void TreeView_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
+        {
+            var viewModel = DataContext as MainWindowViewModel;
+            if (viewModel != null)
+            {
+                viewModel.SelectedCommand = e.NewValue as SelectionListCommandViewModel;
+            }
         }
     }
 }

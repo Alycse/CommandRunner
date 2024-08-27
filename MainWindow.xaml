@@ -47,7 +47,7 @@
                 </TextBlock.ContextMenu>
             </TextBlock>
         </DataTemplate>
-        
+
         <helpers:SelectionListItemTemplateSelector
             x:Key="SelectionListItemTemplateSelector"
             ContainerTemplate="{StaticResource ContainerTemplate}"
@@ -78,7 +78,8 @@
                       Foreground="White" 
                       BorderThickness="0" 
                       Background="#FF323232"
-                      ItemTemplateSelector="{StaticResource SelectionListItemTemplateSelector}">
+                      ItemTemplateSelector="{StaticResource SelectionListItemTemplateSelector}"
+                      SelectedItemChanged="TreeView_SelectedItemChanged">
                 <TreeView.ContextMenu>
                     <StaticResource ResourceKey="BackgroundContextMenu"/>
                 </TreeView.ContextMenu>
@@ -91,30 +92,30 @@
             <StackPanel Margin="5">
                 <StackPanel Margin="4">
                     <Label Content="Name" Foreground="Gainsboro"/>
-                    <TextBox Background="#FF424242" Foreground="Gainsboro" Margin="5,0,2,0"/>
+                    <TextBox Text="{Binding SelectedCommand.Name, UpdateSourceTrigger=PropertyChanged}" Background="#FF424242" Foreground="Gainsboro" Margin="5,0,2,0" IsEnabled="{Binding IsCommandSelected}"/>
                 </StackPanel>
                 <StackPanel Margin="4">
                     <Label Content="File Path" Foreground="Gainsboro"/>
-                    <TextBox Background="#FF424242" Foreground="Gainsboro" Margin="5,0,2,0"/>
+                    <TextBox Text="{Binding SelectedCommand.Command.FilePath, UpdateSourceTrigger=PropertyChanged}" Background="#FF424242" Foreground="Gainsboro" Margin="5,0,2,0" IsEnabled="{Binding IsCommandSelected}"/>
                 </StackPanel>
                 <StackPanel Margin="4">
                     <Label Content="Argument" Foreground="Gainsboro"/>
-                    <TextBox Background="#FF424242" Foreground="Gainsboro" Margin="5,0,2,0"/>
+                    <TextBox Text="{Binding SelectedCommand.Command.Argument, UpdateSourceTrigger=PropertyChanged}" Background="#FF424242" Foreground="Gainsboro" Margin="5,0,2,0" IsEnabled="{Binding IsCommandSelected}"/>
                 </StackPanel>
                 <StackPanel Margin="4">
                     <Label Content="Tags" Foreground="Gainsboro"/>
-                    <TextBox Background="#FF424242" Foreground="Gainsboro" Margin="5,0,2,0"/>
+                    <TextBox Text="{Binding SelectedCommand.Command.Tags, UpdateSourceTrigger=PropertyChanged}" Background="#FF424242" Foreground="Gainsboro" Margin="5,0,2,0" IsEnabled="{Binding IsCommandSelected}"/>
                 </StackPanel>
                 <StackPanel Margin="4,14,0,0" Orientation="Horizontal">
-                    <CheckBox Margin="4,6,0,0"></CheckBox>
+                    <CheckBox IsChecked="{Binding SelectedCommand.Command.CompleteUponExecution}" Margin="4,6,0,0" IsEnabled="{Binding IsCommandSelected}"/>
                     <Label Content="Complete upon execution" Foreground="Gainsboro"/>
                 </StackPanel>
                 <StackPanel Margin="4,4,0,0" Orientation="Horizontal">
-                    <CheckBox Margin="4,6,0,0"></CheckBox>
+                    <CheckBox IsChecked="{Binding SelectedCommand.Command.RemoveFromQueueUponCompletion}" Margin="4,6,0,0" IsEnabled="{Binding IsCommandSelected}"/>
                     <Label Content="Remove from Queue after completion" Foreground="Gainsboro"/>
                 </StackPanel>
                 <StackPanel Margin="0,10,4,0" Orientation="Horizontal" HorizontalAlignment="Right">
-                    <Button Padding="25,5,25,5" Background="#FF424242" Foreground="Gainsboro" >Save</Button>
+                    <Button Padding="25,5,25,5" Background="#FF424242" Foreground="Gainsboro" Command="{Binding SaveCommand}" IsEnabled="{Binding IsCommandSelected}">Save</Button>
                 </StackPanel>
             </StackPanel>
         </Border>
@@ -128,7 +129,7 @@
 
         <Border Grid.Column="0" Grid.Row="2" Grid.ColumnSpan="2" Margin="3" BorderThickness="2" Background="#FF323232">
         </Border>
-        
+
         <GridSplitter Grid.Column="1" Grid.Row="2" Width="3" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="#FF404040"/>
 
         <Border Grid.Column="2" Grid.Row="2" Grid.ColumnSpan="3" Margin="3" BorderThickness="2" Background="#FF323232">
