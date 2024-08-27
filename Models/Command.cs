@@ -8,6 +8,7 @@ namespace CommandRunner.Models
         public string FilePath { get; set; }
         public string Argument { get; set; }
         public string Tags { get; set; }
-        public bool IsFireAndForget { get; set; }
+        public bool CompleteUponExecution { get; set; }
+        public bool RemoveFromQueueUponCompletion { get; set; }
     }
 }
