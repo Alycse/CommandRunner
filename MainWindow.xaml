@@ -16,6 +16,7 @@
         <helpers:CommandStateToBrushConverter x:Key="CommandStateToBrushConverter"/>
         <helpers:TrackAndContinueToIsEnabledConverter x:Key="TrackAndContinueToIsEnabledConverter"/>
         <helpers:BooleanToExpandedConverter x:Key="BooleanToExpandedConverter"/>
+        <helpers:OrBooleanConverter x:Key="OrBooleanConverter"/>
 
         <ContextMenu x:Key="ContainerContextMenu">
             <MenuItem Header="New Command" Command="{Binding Source={StaticResource MainViewModel}, Path=NewCommandCommand}" CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
@@ -229,8 +230,15 @@
                 </StackPanel>
 
                 <StackPanel Margin="0,20,4,0" Orientation="Horizontal" HorizontalAlignment="Right">
-                    <Button Padding="25,5,25,5" Background="#FF424242" Foreground="Gainsboro" Command="{Binding SaveCommand}" 
-                            IsEnabled="{Binding IsCommandSelected or IsContainerSelected}">Save</Button>
+                    <Button Padding="25,5,25,5" Background="#FF424242" Foreground="Gainsboro" Command="{Binding SaveCommand}">
+                        <Button.IsEnabled>
+                            <MultiBinding Converter="{StaticResource OrBooleanConverter}">
+                                <Binding Path="IsCommandSelected" />
+                                <Binding Path="IsContainerSelected" />
+                            </MultiBinding>
+                        </Button.IsEnabled>
+                        Save
+                    </Button>
                 </StackPanel>
             </StackPanel>
         </Border>
