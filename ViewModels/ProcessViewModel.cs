@@ -37,6 +37,7 @@ public class ProcessViewModel : ViewModelBase
         {
             _logText = value;
             OnPropertyChanged(nameof(LogText));
+            OnLogTextChanged?.Invoke(this, EventArgs.Empty); // Notify when the log text changes
         }
     }
 
@@ -59,6 +60,8 @@ public class ProcessViewModel : ViewModelBase
             OnPropertyChanged(nameof(IsEnded));
         }
     }
+
+    public event EventHandler OnLogTextChanged; // Event to notify when the log text changes
 
     public void AppendLog(string log)
     {

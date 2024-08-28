@@ -14,6 +14,15 @@ namespace CommandRunner.Services
             if (command == null || string.IsNullOrWhiteSpace(command.FilePath))
                 return;
 
+            // Declare processViewModel at the start of the method
+            ProcessViewModel processViewModel = null;
+
+            // Task completion source to signal when the log is detected
+            var logDetected = new TaskCompletionSource<bool>();
+
+            // Initialize the logTextChangedHandler here so it's in scope
+            EventHandler logTextChangedHandler = null;
+
             try
             {
                 var workingDirectory = Path.GetDirectoryName(command.FilePath);
@@ -25,13 +34,19 @@ namespace CommandRunner.Services
                     RedirectStandardOutput = command.TrackProcess,  // Only redirect output if tracking
                     RedirectStandardError = command.TrackProcess,   // Only redirect error if tracking
                     UseShellExecute = !command.TrackProcess,        // Use shell execute if not tracking
-                    CreateNoWindow = command.TrackProcess,           // Show window only if not tracking
+                    CreateNoWindow = command.TrackProcess,          // Show window only if not tracking
                     WorkingDirectory = workingDirectory
                 };
 
                 var process = new Process { StartInfo = processStartInfo, EnableRaisingEvents = true };
 
-                ProcessViewModel processViewModel = null;
+                logTextChangedHandler = (sender, args) =>
+                {
+                    if (processViewModel != null && processViewModel.LogText.Contains(command.LogToDetectBeforeContinuing))
+                    {
+                        logDetected.TrySetResult(true);
+                    }
+                };
 
                 if (command.TrackProcess)
                 {
@@ -41,6 +56,8 @@ namespace CommandRunner.Services
                         Name = name,
                         Process = process
                     };
+
+                    processViewModel.OnLogTextChanged += logTextChangedHandler;
 
                     onProcessStarted?.Invoke(processViewModel);
 
@@ -79,12 +96,13 @@ namespace CommandRunner.Services
                     process.BeginErrorReadLine();
                 }
 
-                await Task.Run(() => process.WaitForExit());
+                // Await process completion or log detection
+                await Task.WhenAny(Task.Run(() => process.WaitForExit()), logDetected.Task);
 
-                if (!command.TrackProcess)
+                // Invoke completion event if log was detected
+                if (logDetected.Task.IsCompleted && processViewModel != null)
                 {
-                    // Command executed without tracking, do nothing further
-                    onLogReceived?.Invoke($"Command '{name}' executed and completed without tracking.");
+                    onProcessCompleted?.Invoke(processViewModel);
                 }
             }
             catch (Exception ex)
@@ -97,6 +115,14 @@ namespace CommandRunner.Services
                 {
                     // If not tracking and an error occurs, just write a basic error message
                     onLogReceived?.Invoke($"Command '{name}' execution failed.");
+                }
+            }
+            finally
+            {
+                // Ensure event handler is removed to prevent memory leaks
+                if (processViewModel != null)
+                {
+                    processViewModel.OnLogTextChanged -= logTextChangedHandler;
                 }
             }
         }

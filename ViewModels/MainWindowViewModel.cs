@@ -146,7 +146,8 @@ namespace CommandRunner.ViewModels
                         Argument = command.Command.Argument,
                         Tags = command.Command.Tags,
                         TrackProcess = command.Command.TrackProcess,
-                        ContinueUponExecution = command.Command.ContinueUponExecution
+                        ContinueUponExecution = command.Command.ContinueUponExecution,
+                        LogToDetectBeforeContinuing = command.Command.LogToDetectBeforeContinuing
                     }
                 };
                 TemporaryContainer = null;
@@ -254,6 +255,16 @@ namespace CommandRunner.ViewModels
 
                 ProcessViewModel currentProcessViewModel = null;
 
+                var logDetected = new TaskCompletionSource<bool>();
+
+                EventHandler logTextChangedHandler = (sender, args) =>
+                {
+                    if (currentProcessViewModel != null && currentProcessViewModel.LogText.Contains(command.LogToDetectBeforeContinuing))
+                    {
+                        logDetected.TrySetResult(true);
+                    }
+                };
+
                 var processTask = _commandExecutionService.ExecuteCommandAsync(
                     commandName,
                     command,
@@ -265,12 +276,16 @@ namespace CommandRunner.ViewModels
                             ProcessList.Add(processViewModel);
                             SelectedProcess = processViewModel;
                         }
+                        currentProcessViewModel.OnLogTextChanged += logTextChangedHandler;
                     },
                     processViewModel =>
                     {
                         Application.Current.Dispatcher.Invoke(() =>
                         {
-                            queueListCommand.State = CommandState.Completed;
+                            if (queueListCommand.State != CommandState.Error)
+                            {
+                                queueListCommand.State = CommandState.Completed;
+                            }
                             OnPropertyChanged(nameof(QueueListCommands));
                         });
                     },
@@ -300,7 +315,19 @@ namespace CommandRunner.ViewModels
                 }
                 else
                 {
-                    await processTask;
+                    if (!string.IsNullOrWhiteSpace(command.LogToDetectBeforeContinuing))
+                    {
+                        await Task.WhenAny(processTask, logDetected.Task);
+                    }
+                    else
+                    {
+                        await processTask;
+                    }
+
+                    if (logDetected.Task.IsCompleted)
+                    {
+                        queueListCommand.State = CommandState.Completed;
+                    }
                 }
             }
         }
@@ -394,6 +421,7 @@ namespace CommandRunner.ViewModels
                     selectedCommand.Command.Tags = TemporaryCommand.Command.Tags;
                     selectedCommand.Command.TrackProcess = TemporaryCommand.Command.TrackProcess;
                     selectedCommand.Command.ContinueUponExecution = TemporaryCommand.Command.ContinueUponExecution;
+                    selectedCommand.Command.LogToDetectBeforeContinuing = TemporaryCommand.Command.LogToDetectBeforeContinuing;
                     selectedCommand.Name = TemporaryCommand.Name;
                 }
             }

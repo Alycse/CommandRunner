@@ -9,5 +9,6 @@ namespace CommandRunner.Models
         public string Tags { get; set; }
         public bool TrackProcess { get; set; } = true;
         public bool ContinueUponExecution { get; set; }
+        public string LogToDetectBeforeContinuing { get; set; }
     }
 }
