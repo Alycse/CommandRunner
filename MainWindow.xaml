@@ -22,15 +22,19 @@
         </ContextMenu>
 
         <ContextMenu x:Key="CommandContextMenu">
-            <MenuItem Header="Queue" Command="{Binding Source={StaticResource MainViewModel}, Path=QueueCommand}"/>
+            <MenuItem Header="Queue" Command="{Binding Source={StaticResource MainViewModel}, Path=QueueCommand}"  CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
             <Separator/>
-            <MenuItem Header="Move" Command="{Binding Source={StaticResource MainViewModel}, Path=MoveCommand}"/>
-            <MenuItem Header="Delete" Command="{Binding Source={StaticResource MainViewModel}, Path=DeleteCommand}"/>
+            <MenuItem Header="Move" Command="{Binding Source={StaticResource MainViewModel}, Path=MoveCommand}"  CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+            <MenuItem Header="Delete" Command="{Binding Source={StaticResource MainViewModel}, Path=DeleteCommand}"  CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
         </ContextMenu>
 
         <ContextMenu x:Key="BackgroundContextMenu">
             <MenuItem Header="New Command" Command="{Binding Source={StaticResource MainViewModel}, Path=NewCommandCommand}"/>
             <MenuItem Header="New Container" Command="{Binding Source={StaticResource MainViewModel}, Path=NewContainerCommand}"/>
+        </ContextMenu>
+        
+        <ContextMenu x:Key="QueuedCommandContextMenu">
+            <MenuItem Header="Remove" Command="{Binding Source={StaticResource MainViewModel}, Path=RemoveQueuedCommand}"  CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
         </ContextMenu>
 
         <HierarchicalDataTemplate x:Key="ContainerTemplate" ItemsSource="{Binding Children}">
@@ -45,6 +49,14 @@
             <TextBlock Text="{Binding Name}" Foreground="#FFCACACA">
                 <TextBlock.ContextMenu>
                     <StaticResource ResourceKey="CommandContextMenu"/>
+                </TextBlock.ContextMenu>
+            </TextBlock>
+        </DataTemplate>
+
+        <DataTemplate x:Key="QueuedCommandTemplate">
+            <TextBlock Text="{Binding Name}" Foreground="#FFCACACA">
+                <TextBlock.ContextMenu>
+                    <StaticResource ResourceKey="QueuedCommandContextMenu"/>
                 </TextBlock.ContextMenu>
             </TextBlock>
         </DataTemplate>
@@ -79,6 +91,7 @@
                       Foreground="White" 
                       BorderThickness="0" 
                       Background="#FF323232"
+                      Margin="5"
                       ItemTemplateSelector="{StaticResource SelectionListItemTemplateSelector}"
                       SelectedItemChanged="TreeView_SelectedItemChanged">
                 <TreeView.ContextMenu>
@@ -158,6 +171,13 @@
         <GridSplitter Grid.Column="0" Grid.Row="1" Grid.ColumnSpan="5" Height="3" HorizontalAlignment="Stretch" VerticalAlignment="Center" Background="#FF404040"/>
 
         <Border Grid.Column="0" Grid.Row="2" Grid.ColumnSpan="2" Margin="3" BorderThickness="2" Background="#FF323232">
+            <TreeView ItemsSource="{Binding QueueListCommands}" 
+              Foreground="White" 
+              BorderThickness="0" 
+              Background="#FF323232"
+              Margin="5"
+              ItemTemplate="{StaticResource QueuedCommandTemplate}">
+            </TreeView>
         </Border>
 
         <GridSplitter Grid.Column="1" Grid.Row="2" Width="3" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="#FF404040"/>

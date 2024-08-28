@@ -12,6 +12,7 @@ namespace CommandRunner.ViewModels
     public class MainWindowViewModel : ViewModelBase
     {
         private const string SaveFilePath = "CommandsData.json";
+
         private SelectionListItemViewModel _selectedItem;
         private SelectionListCommandViewModel _temporaryCommand;
         private SelectionListContainerViewModel _temporaryContainer;
@@ -98,6 +99,10 @@ namespace CommandRunner.ViewModels
         public ICommand QueueCommand { get; set; }
         public ICommand SaveCommand { get; set; }
 
+        public ICommand RemoveQueuedCommand { get; set; }
+
+        public ObservableCollection<QueueListCommandViewModel> QueueListCommands { get; set; }
+
         public MainWindowViewModel()
         {
             NewCommandCommand = new RelayCommand(ExecuteNewCommand);
@@ -106,8 +111,10 @@ namespace CommandRunner.ViewModels
             DeleteCommand = new RelayCommand(ExecuteDeleteCommand);
             QueueCommand = new RelayCommand(ExecuteQueueCommand);
             SaveCommand = new RelayCommand(ExecuteSaveCommand, param => IsCommandSelected || IsContainerSelected);
+            RemoveQueuedCommand = new RelayCommand(ExecuteRemoveQueuedCommand);
 
             SelectionListItems = new ObservableCollection<SelectionListItemViewModel>();
+            QueueListCommands = new ObservableCollection<QueueListCommandViewModel>();
 
             LoadData();
 
@@ -168,7 +175,23 @@ namespace CommandRunner.ViewModels
 
         private void ExecuteQueueCommand(object parameter)
         {
-            // Implement your logic here
+            var selectedCommand = parameter as SelectionListCommandViewModel;
+
+            QueueListCommandViewModel queueListCommand = new QueueListCommandViewModel();
+            queueListCommand.Name = selectedCommand.Name;
+            queueListCommand.Command = selectedCommand.Command;
+
+            QueueListCommands.Add(queueListCommand);
+        }
+
+        private void ExecuteRemoveQueuedCommand(object parameter)
+        {
+            var selectedQueuedCommand = parameter as QueueListCommandViewModel;
+
+            if(selectedQueuedCommand != null)
+            {
+                QueueListCommands.Remove(selectedQueuedCommand);
+            }
         }
 
         private void ExecuteSaveCommand(object parameter)
