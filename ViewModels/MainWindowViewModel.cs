@@ -647,9 +647,12 @@ namespace CommandRunner.ViewModels
 
                 EventHandler logTextChangedHandler = (sender, args) =>
                 {
-                    if (currentProcessViewModel != null && currentProcessViewModel.LogText.Contains(command.LogToDetectBeforeContinuing))
+                    if(command.LogToDetectBeforeContinuing != null)
                     {
-                        logDetected.TrySetResult(true);
+                        if (currentProcessViewModel != null && currentProcessViewModel.LogText.Contains(command.LogToDetectBeforeContinuing))
+                        {
+                            logDetected.TrySetResult(true);
+                        }
                     }
                 };
 
