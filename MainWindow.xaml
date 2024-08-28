@@ -207,7 +207,7 @@
 
         <!--Process List Section-->
         <Border Grid.Column="0" Grid.Row="2" Grid.ColumnSpan="2" Margin="3" BorderThickness="2" Background="#FF323232">
-            <TreeView ItemsSource="{Binding ProcessListCommands}" 
+            <TreeView ItemsSource="{Binding ProcessList}" 
                   Foreground="White" 
                   BorderThickness="0" 
                   Background="#FF323232"

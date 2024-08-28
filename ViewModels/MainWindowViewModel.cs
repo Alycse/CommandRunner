@@ -108,6 +108,7 @@ namespace CommandRunner.ViewModels
         public ICommand RemoveProcessCommand { get; set; }
 
         public ObservableCollection<QueueListCommandViewModel> QueueListCommands { get; set; }
+        public ObservableCollection<ProcessViewModel> ProcessList { get; set; }
 
         public MainWindowViewModel()
         {
