@@ -101,6 +101,9 @@ namespace CommandRunner.ViewModels
         public ICommand RemoveQueuedCommandCommand { get; set; }
         public ICommand EndProcessCommand { get; set; }
         public ICommand RemoveProcessCommand { get; set; }
+        public ICommand ClearEndedProcessesCommand { get; set; }
+        public ICommand EndAllProcessesCommand { get; set; }
+        public ICommand ClearLogCommand { get; set; }
 
         public MainWindowViewModel()
         {
@@ -117,6 +120,9 @@ namespace CommandRunner.ViewModels
             RemoveQueuedCommandCommand = new RelayCommand(ExecuteRemoveQueuedCommandCommand);
             EndProcessCommand = new RelayCommand(ExecuteEndProcessCommand);
             RemoveProcessCommand = new RelayCommand(ExecuteRemoveProcessCommand);
+            ClearEndedProcessesCommand = new RelayCommand(ExecuteClearEndedProcessesCommand);
+            EndAllProcessesCommand = new RelayCommand(ExecuteEndAllProcessesCommand);
+            ClearLogCommand = new RelayCommand(ExecuteClearLogCommand, param => SelectedProcess != null);
 
             SelectionListItems = new ObservableCollection<SelectionListItemViewModel>();
             QueueListCommands = new ObservableCollection<QueueListCommandViewModel>();
@@ -327,7 +333,48 @@ namespace CommandRunner.ViewModels
         {
             if (parameter is ProcessViewModel selectedProcess)
             {
-                ProcessList.Remove(selectedProcess);
+                if(selectedProcess.IsEnded)
+                {
+                    ProcessList.Remove(selectedProcess);
+                }
+            }
+        }
+
+        private void ExecuteEndAllProcessesCommand(object obj)
+        {
+            foreach (var process in ProcessList)
+            {
+                try
+                {
+                    if (!process.IsEnded)
+                    {
+                        process?.Process?.Kill();
+                        process.IsEnded = true;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    process.AppendLog($"Error ending process: {ex.Message}");
+                }
+            }
+        }
+
+        private void ExecuteClearEndedProcessesCommand(object obj)
+        {
+            var endedProcesses = ProcessList.Where(p => p.IsEnded).ToList();
+
+            foreach (var process in endedProcesses)
+            {
+                ProcessList.Remove(process);
+            }
+        }
+
+        private void ExecuteClearLogCommand(object parameter)
+        {
+            if (SelectedProcess != null)
+            {
+                SelectedProcess.LogText = string.Empty;
+                OnPropertyChanged(nameof(LogText));
             }
         }
 
