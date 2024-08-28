@@ -171,6 +171,7 @@ namespace CommandRunner.ViewModels
         public ICommand QueueAllCommand { get; set; }
         public ICommand MoveUpCommand { get; set; }
         public ICommand MoveDownCommand { get; set; }
+        public ICommand RunWithoutQueueingCommand { get; set; }
 
         public MainWindowViewModel()
         {
@@ -195,6 +196,7 @@ namespace CommandRunner.ViewModels
             QueueAllCommand = new RelayCommand(ExecuteQueueAllCommand);
             MoveUpCommand = new RelayCommand(ExecuteMoveUpCommand);
             MoveDownCommand = new RelayCommand(ExecuteMoveDownCommand);
+            RunWithoutQueueingCommand = new RelayCommand(async obj => await ExecuteRunWithoutQueueingCommand(obj));
 
             SelectionListItems = new ObservableCollection<SelectionListItemViewModel>();
             FilteredSelectionListItems = new ObservableCollection<SelectionListItemViewModel>();
@@ -207,6 +209,54 @@ namespace CommandRunner.ViewModels
             ApplyFilter();
 
             Application.Current.MainWindow.DataContext = this;
+        }
+
+        private async Task ExecuteRunWithoutQueueingCommand(object parameter)
+        {
+            if (parameter is SelectionListCommandViewModel commandViewModel)
+            {
+                var command = commandViewModel.Command;
+                var commandName = commandViewModel.Name;
+
+                ProcessViewModel processViewModel = null;
+
+                await _commandExecutionService.ExecuteCommandAsync(
+                    commandName,
+                    command,
+                    processStarted =>
+                    {
+                        if (command.TrackProcess)
+                        {
+                            processViewModel = processStarted;
+                            ProcessList.Add(processViewModel);
+                            SelectedProcess = processViewModel;
+                        }
+                    },
+                    processCompleted =>
+                    {
+                        if (command.TrackProcess)
+                        {
+                            Application.Current.Dispatcher.Invoke(() =>
+                            {
+                                processViewModel.IsEnded = true;
+                                OnPropertyChanged(nameof(ProcessList));
+                            });
+                        }
+                    },
+                    logMessage =>
+                    {
+                        if (command.TrackProcess && processViewModel != null)
+                        {
+                            processViewModel.AppendLog(logMessage);
+
+                            if (SelectedProcess == processViewModel)
+                            {
+                                OnPropertyChanged(nameof(LogText));
+                            }
+                        }
+                    }
+                );
+            }
         }
 
         private void ExecuteMoveUpCommand(object parameter)

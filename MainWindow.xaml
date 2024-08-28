@@ -35,6 +35,8 @@
         <ContextMenu x:Key="CommandContextMenu">
             <MenuItem Header="Queue" Command="{Binding Source={StaticResource MainViewModel}, Path=QueueCommand}"  CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
             <Separator/>
+            <MenuItem Header="Run without queueing" Command="{Binding Source={StaticResource MainViewModel}, Path=RunWithoutQueueingCommand}" CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+            <Separator/>
             <MenuItem Header="Duplicate" Command="{Binding Source={StaticResource MainViewModel}, Path=DuplicateCommandCommand}" CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
             <MenuItem Header="Move" Command="{Binding Source={StaticResource MainViewModel}, Path=MoveCommand}"  CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
             <MenuItem Header="Delete" Command="{Binding Source={StaticResource MainViewModel}, Path=DeleteCommand}"  CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
