@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.IO;
 using System.Threading.Tasks;
 using CommandRunner.Models;
 using CommandRunner.ViewModels;
@@ -15,6 +16,8 @@ namespace CommandRunner.Services
 
             try
             {
+                var workingDirectory = Path.GetDirectoryName(command.FilePath);
+
                 var processStartInfo = new ProcessStartInfo
                 {
                     FileName = command.FilePath,
@@ -22,7 +25,8 @@ namespace CommandRunner.Services
                     RedirectStandardOutput = command.TrackProcess,  // Only redirect output if tracking
                     RedirectStandardError = command.TrackProcess,   // Only redirect error if tracking
                     UseShellExecute = !command.TrackProcess,        // Use shell execute if not tracking
-                    CreateNoWindow = command.TrackProcess           // Show window only if not tracking
+                    CreateNoWindow = command.TrackProcess,           // Show window only if not tracking
+                    WorkingDirectory = workingDirectory
                 };
 
                 var process = new Process { StartInfo = processStartInfo, EnableRaisingEvents = true };
