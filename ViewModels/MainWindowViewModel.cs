@@ -49,6 +49,19 @@ namespace CommandRunner.ViewModels
 
         public ObservableCollection<SelectionListItemViewModel> SelectionListItems { get; set; }
         public ObservableCollection<SelectionListItemViewModel> FilteredSelectionListItems { get; private set; }
+        public ObservableCollection<SelectionListItemViewModel> VisibleSelectionListItems
+        {
+            get
+            {
+                // Return filtered items if either search text or tags is not empty
+                if (!string.IsNullOrWhiteSpace(SearchText) || !string.IsNullOrWhiteSpace(SearchTags))
+                {
+                    return FilteredSelectionListItems;
+                }
+                // Otherwise, return the full selection list
+                return SelectionListItems;
+            }
+        }
 
         public ObservableCollection<QueueListCommandViewModel> QueueListCommands { get; set; }
         public ObservableCollection<ProcessViewModel> ProcessList { get; set; }
@@ -214,19 +227,14 @@ namespace CommandRunner.ViewModels
                 }
             }
 
-            // If both search text boxes are empty, show all containers even if they're empty
-            if (string.IsNullOrWhiteSpace(SearchText) && string.IsNullOrWhiteSpace(SearchTags))
-            {
-                filteredItems = SelectionListItems;
-            }
-
             FilteredSelectionListItems.Clear();
             foreach (var filteredItem in filteredItems)
             {
                 FilteredSelectionListItems.Add(filteredItem);
             }
 
-            OnPropertyChanged(nameof(FilteredSelectionListItems));
+            // Notify the UI that VisibleSelectionListItems has changed
+            OnPropertyChanged(nameof(VisibleSelectionListItems));
         }
 
         private bool FilterCommand(SelectionListCommandViewModel command)

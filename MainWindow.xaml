@@ -132,17 +132,17 @@
 
                 <!-- TreeView for Selection List -->
                 <Border Margin="5" BorderBrush="Gray" BorderThickness="1" Grid.Row="2" Grid.ColumnSpan="2">
-                    <TreeView ItemsSource="{Binding FilteredSelectionListItems}" 
-                  Margin="5"
-                  Foreground="White" 
-                  BorderThickness="0" 
-                  Background="#FF323232"
-                  ItemTemplateSelector="{StaticResource SelectionListItemTemplateSelector}"
-                  SelectedItemChanged="TreeView_SelectedItemChanged">
+                    <TreeView ItemsSource="{Binding VisibleSelectionListItems}" 
+          Margin="5"
+          Foreground="White" 
+          BorderThickness="0" 
+          Background="#FF323232"
+          ItemTemplateSelector="{StaticResource SelectionListItemTemplateSelector}"
+          SelectedItemChanged="TreeView_SelectedItemChanged">
                         <TreeView.ItemContainerStyle>
                             <Style TargetType="TreeViewItem">
                                 <Setter Property="IsExpanded" 
-                            Value="{Binding DataContext.SearchText, 
+                    Value="{Binding DataContext.SearchText, 
                             RelativeSource={RelativeSource AncestorType=Window}, 
                             Converter={StaticResource BooleanToExpandedConverter}}"/>
                             </Style>
