@@ -16,7 +16,7 @@ namespace CommandRunner
             var viewModel = DataContext as MainWindowViewModel;
             if (viewModel != null)
             {
-                viewModel.SelectedCommand = e.NewValue as SelectionListCommandViewModel;
+                viewModel.SelectedItem = e.NewValue as SelectionListItemViewModel;
             }
         }
     }

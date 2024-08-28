@@ -12,41 +12,57 @@ namespace CommandRunner.ViewModels
     public class MainWindowViewModel : ViewModelBase
     {
         private const string SaveFilePath = "CommandsData.json";
-        private SelectionListCommandViewModel _selectedCommand;
+        private SelectionListItemViewModel _selectedItem;
         private SelectionListCommandViewModel _temporaryCommand;
+        private SelectionListContainerViewModel _temporaryContainer;
 
         public ObservableCollection<SelectionListItemViewModel> SelectionListItems { get; set; }
 
-        public SelectionListCommandViewModel SelectedCommand
+        public SelectionListItemViewModel SelectedItem
         {
-            get => _selectedCommand;
+            get => _selectedItem;
             set
             {
-                if (_selectedCommand != value)
+                if (_selectedItem != value)
                 {
-                    _selectedCommand = value;
-                    if (_selectedCommand != null)
+                    _selectedItem = value;
+                    if (_selectedItem is SelectionListCommandViewModel command)
                     {
                         TemporaryCommand = new SelectionListCommandViewModel
                         {
-                            Name = _selectedCommand.Name,
+                            Name = command.Name,
                             Command = new Command
                             {
-                                FilePath = _selectedCommand.Command.FilePath,
-                                Argument = _selectedCommand.Command.Argument,
-                                Tags = _selectedCommand.Command.Tags,
-                                CompleteUponExecution = _selectedCommand.Command.CompleteUponExecution,
-                                RemoveFromQueueUponCompletion = _selectedCommand.Command.RemoveFromQueueUponCompletion
+                                FilePath = command.Command.FilePath,
+                                Argument = command.Command.Argument,
+                                Tags = command.Command.Tags,
+                                CompleteUponExecution = command.Command.CompleteUponExecution,
+                                RemoveFromQueueUponCompletion = command.Command.RemoveFromQueueUponCompletion
                             }
                         };
+                        TemporaryContainer = null;
+                    }
+                    else if (_selectedItem is SelectionListContainerViewModel container)
+                    {
+                        TemporaryContainer = new SelectionListContainerViewModel
+                        {
+                            Name = container.Name,
+                            Children = container.Children
+                        };
+                        TemporaryCommand = null;
                     }
                     else
                     {
                         TemporaryCommand = null;
+                        TemporaryContainer = null;
                     }
-                    OnPropertyChanged(nameof(SelectedCommand));
+
+                    OnPropertyChanged(nameof(SelectedItem));
                     OnPropertyChanged(nameof(TemporaryCommand));
+                    OnPropertyChanged(nameof(TemporaryContainer));
                     OnPropertyChanged(nameof(IsCommandSelected));
+                    OnPropertyChanged(nameof(IsContainerSelected));
+                    OnPropertyChanged(nameof(IsItemSelected));
                 }
             }
         }
@@ -61,7 +77,19 @@ namespace CommandRunner.ViewModels
             }
         }
 
-        public bool IsCommandSelected => SelectedCommand != null;
+        public SelectionListContainerViewModel TemporaryContainer
+        {
+            get => _temporaryContainer;
+            set
+            {
+                _temporaryContainer = value;
+                OnPropertyChanged(nameof(TemporaryContainer));
+            }
+        }
+
+        public bool IsCommandSelected => SelectedItem is SelectionListCommandViewModel;
+        public bool IsContainerSelected => SelectedItem is SelectionListContainerViewModel;
+        public bool IsItemSelected => IsCommandSelected || IsContainerSelected;
 
         public ICommand NewCommandCommand { get; set; }
         public ICommand NewContainerCommand { get; set; }
@@ -77,7 +105,7 @@ namespace CommandRunner.ViewModels
             MoveCommand = new RelayCommand(ExecuteMoveCommand);
             DeleteCommand = new RelayCommand(ExecuteDeleteCommand);
             QueueCommand = new RelayCommand(ExecuteQueueCommand);
-            SaveCommand = new RelayCommand(ExecuteSaveCommand, param => IsCommandSelected);
+            SaveCommand = new RelayCommand(ExecuteSaveCommand, param => IsCommandSelected || IsContainerSelected);
 
             SelectionListItems = new ObservableCollection<SelectionListItemViewModel>();
 
@@ -145,21 +173,24 @@ namespace CommandRunner.ViewModels
 
         private void ExecuteSaveCommand(object parameter)
         {
-            // Update the original command with the temporary ViewModel properties
-            if (SelectedCommand != null && TemporaryCommand != null)
+            if (IsCommandSelected && TemporaryCommand != null)
             {
-                SelectedCommand.Command.FilePath = TemporaryCommand.Command.FilePath;
-                SelectedCommand.Command.Argument = TemporaryCommand.Command.Argument;
-                SelectedCommand.Command.Tags = TemporaryCommand.Command.Tags;
-                SelectedCommand.Command.CompleteUponExecution = TemporaryCommand.Command.CompleteUponExecution;
-                SelectedCommand.Command.RemoveFromQueueUponCompletion = TemporaryCommand.Command.RemoveFromQueueUponCompletion;
-
-                // Update the Name property in the TreeView
-                SelectedCommand.Name = TemporaryCommand.Name;
+                var selectedCommand = SelectedItem as SelectionListCommandViewModel;
+                selectedCommand.Command.FilePath = TemporaryCommand.Command.FilePath;
+                selectedCommand.Command.Argument = TemporaryCommand.Command.Argument;
+                selectedCommand.Command.Tags = TemporaryCommand.Command.Tags;
+                selectedCommand.Command.CompleteUponExecution = TemporaryCommand.Command.CompleteUponExecution;
+                selectedCommand.Command.RemoveFromQueueUponCompletion = TemporaryCommand.Command.RemoveFromQueueUponCompletion;
+                selectedCommand.Name = TemporaryCommand.Name;
+            }
+            else if (IsContainerSelected && TemporaryContainer != null)
+            {
+                var selectedContainer = SelectedItem as SelectionListContainerViewModel;
+                selectedContainer.Name = TemporaryContainer.Name;
             }
 
             SaveAllData();
-            OnPropertyChanged(nameof(SelectedCommand)); // Refresh the binding
+            OnPropertyChanged(nameof(SelectedItem));
         }
 
         private void SaveAllData()
