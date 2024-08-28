@@ -97,6 +97,7 @@ namespace CommandRunner.ViewModels
         public ICommand QueueCommand { get; set; }
         public ICommand SaveCommand { get; set; }
         public ICommand RunQueueCommand { get; set; }
+        public ICommand ClearQueueCommand { get; set; }
         public ICommand RemoveQueuedCommandCommand { get; set; }
         public ICommand EndProcessCommand { get; set; }
         public ICommand RemoveProcessCommand { get; set; }
@@ -112,6 +113,7 @@ namespace CommandRunner.ViewModels
             QueueCommand = new RelayCommand(ExecuteQueueCommand);
             SaveCommand = new RelayCommand(ExecuteSaveCommand, param => IsCommandSelected || IsContainerSelected);
             RunQueueCommand = new RelayCommand(async obj => await ExecuteRunQueueCommand());
+            ClearQueueCommand = new RelayCommand(ExecuteClearQueueCommand);
             RemoveQueuedCommandCommand = new RelayCommand(ExecuteRemoveQueuedCommandCommand);
             EndProcessCommand = new RelayCommand(ExecuteEndProcessCommand);
             RemoveProcessCommand = new RelayCommand(ExecuteRemoveProcessCommand);
@@ -137,8 +139,7 @@ namespace CommandRunner.ViewModels
                         FilePath = command.Command.FilePath,
                         Argument = command.Command.Argument,
                         Tags = command.Command.Tags,
-                        CompleteUponExecution = command.Command.CompleteUponExecution,
-                        RemoveFromQueueUponCompletion = command.Command.RemoveFromQueueUponCompletion
+                        ContinueUponExecution = command.Command.ContinueUponExecution
                     }
                 };
                 TemporaryContainer = null;
@@ -229,8 +230,16 @@ namespace CommandRunner.ViewModels
 
         private async Task ExecuteRunQueueCommand()
         {
-            foreach (var queueListCommand in QueueListCommands.ToList())
+            foreach (var queueListCommand in QueueListCommands)
             {
+                queueListCommand.State = CommandState.Queued;
+            }
+
+            OnPropertyChanged(nameof(QueueListCommands));
+
+            for (int i = 0; i < QueueListCommands.Count; i++)
+            {
+                var queueListCommand = QueueListCommands[i];
                 var command = queueListCommand.Command;
                 var commandName = queueListCommand.Name;
 
@@ -238,7 +247,7 @@ namespace CommandRunner.ViewModels
 
                 ProcessViewModel currentProcessViewModel = null;
 
-                await _commandExecutionService.ExecuteCommandAsync(
+                var processTask = _commandExecutionService.ExecuteCommandAsync(
                     commandName,
                     command,
                     processViewModel =>
@@ -246,52 +255,48 @@ namespace CommandRunner.ViewModels
                         currentProcessViewModel = processViewModel;
                         ProcessList.Add(processViewModel);
 
-                        // Automatically select the process that starts running
                         SelectedProcess = processViewModel;
                     },
                     processViewModel =>
                     {
                         Application.Current.Dispatcher.Invoke(() =>
                         {
-                            if (command.RemoveFromQueueUponCompletion || command.CompleteUponExecution)
-                            {
-                                queueListCommand.State = CommandState.Completed;
-                                QueueListCommands.Remove(queueListCommand);
-                            }
-                            else
-                            {
-                                processViewModel.Process.WaitForExit(); // Ensure process is closed/terminated
-                                queueListCommand.State = CommandState.Completed;
-                            }
-
-                            // Force UI refresh for the queue
+                            processViewModel.Process.WaitForExit();
+                            queueListCommand.State = CommandState.Completed;
                             OnPropertyChanged(nameof(QueueListCommands));
                         });
                     },
                     logMessage =>
                     {
-                        // Ensure logs are appended to the current process's log
                         currentProcessViewModel?.AppendLog(logMessage);
 
-                        // Trigger the update of LogText binding
                         if (SelectedProcess == currentProcessViewModel)
                         {
                             OnPropertyChanged(nameof(LogText));
                         }
 
-                        if (logMessage.Contains("Error")) // Simplified error detection
+                        if (logMessage.Contains("Error"))
                         {
                             queueListCommand.State = CommandState.Error;
                         }
                     }
                 );
 
-                if (queueListCommand.State != CommandState.Completed && queueListCommand.State != CommandState.Error)
+                if (command.ContinueUponExecution)
                 {
-                    // Wait for process to complete unless it's set to complete upon execution
-                    await Task.Run(() => queueListCommand.Command.CompleteUponExecution);
+                    queueListCommand.State = CommandState.Completed;
+                    OnPropertyChanged(nameof(QueueListCommands));
+                }
+                else
+                {
+                    await processTask;
                 }
             }
+        }
+
+        private void ExecuteClearQueueCommand(object obj)
+        {
+            QueueListCommands.Clear();
         }
 
         private void ExecuteRemoveQueuedCommandCommand(object parameter)
@@ -308,8 +313,8 @@ namespace CommandRunner.ViewModels
             {
                 try
                 {
-                    selectedProcess?.Process?.Kill(); // Terminate the process
-                    selectedProcess.IsEnded = true; // Mark it as ended
+                    selectedProcess?.Process?.Kill();
+                    selectedProcess.IsEnded = true;
                 }
                 catch (Exception ex)
                 {
@@ -322,7 +327,7 @@ namespace CommandRunner.ViewModels
         {
             if (parameter is ProcessViewModel selectedProcess)
             {
-                ProcessList.Remove(selectedProcess); // Remove the process from the list
+                ProcessList.Remove(selectedProcess);
             }
         }
 
@@ -335,8 +340,7 @@ namespace CommandRunner.ViewModels
                     selectedCommand.Command.FilePath = TemporaryCommand.Command.FilePath;
                     selectedCommand.Command.Argument = TemporaryCommand.Command.Argument;
                     selectedCommand.Command.Tags = TemporaryCommand.Command.Tags;
-                    selectedCommand.Command.CompleteUponExecution = TemporaryCommand.Command.CompleteUponExecution;
-                    selectedCommand.Command.RemoveFromQueueUponCompletion = TemporaryCommand.Command.RemoveFromQueueUponCompletion;
+                    selectedCommand.Command.ContinueUponExecution = TemporaryCommand.Command.ContinueUponExecution;
                     selectedCommand.Name = TemporaryCommand.Name;
                 }
             }
