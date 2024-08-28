@@ -169,6 +169,8 @@ namespace CommandRunner.ViewModels
         public ICommand DuplicateContainerCommand { get; set; }
         public ICommand DuplicateCommandCommand { get; set; }
         public ICommand QueueAllCommand { get; set; }
+        public ICommand MoveUpCommand { get; set; }
+        public ICommand MoveDownCommand { get; set; }
 
         public MainWindowViewModel()
         {
@@ -191,6 +193,8 @@ namespace CommandRunner.ViewModels
             DuplicateContainerCommand = new RelayCommand(ExecuteDuplicateContainer);
             DuplicateCommandCommand = new RelayCommand(ExecuteDuplicateCommand);
             QueueAllCommand = new RelayCommand(ExecuteQueueAllCommand);
+            MoveUpCommand = new RelayCommand(ExecuteMoveUpCommand);
+            MoveDownCommand = new RelayCommand(ExecuteMoveDownCommand);
 
             SelectionListItems = new ObservableCollection<SelectionListItemViewModel>();
             FilteredSelectionListItems = new ObservableCollection<SelectionListItemViewModel>();
@@ -203,6 +207,54 @@ namespace CommandRunner.ViewModels
             ApplyFilter();
 
             Application.Current.MainWindow.DataContext = this;
+        }
+
+        private void ExecuteMoveUpCommand(object parameter)
+        {
+            if (parameter is SelectionListItemViewModel selectedItem)
+            {
+                MoveItem(selectedItem, -1);
+            }
+        }
+
+        private void ExecuteMoveDownCommand(object parameter)
+        {
+            if (parameter is SelectionListItemViewModel selectedItem)
+            {
+                MoveItem(selectedItem, 1);
+            }
+        }
+
+        private void MoveItem(SelectionListItemViewModel item, int direction)
+        {
+            ObservableCollection<SelectionListItemViewModel> parentCollection = null;
+
+            // Determine the collection where the item resides
+            foreach (var rootItem in SelectionListItems)
+            {
+                if (rootItem == item)
+                {
+                    parentCollection = SelectionListItems;
+                    break;
+                }
+                if (rootItem is SelectionListContainerViewModel container && container.Children.Contains(item))
+                {
+                    parentCollection = container.Children;
+                    break;
+                }
+            }
+
+            if (parentCollection != null)
+            {
+                int oldIndex = parentCollection.IndexOf(item);
+                int newIndex = oldIndex + direction;
+
+                if (newIndex >= 0 && newIndex < parentCollection.Count)
+                {
+                    parentCollection.Move(oldIndex, newIndex);
+                    SaveAllData(); // Save after moving the item
+                }
+            }
         }
 
         private void ExecuteQueueAllCommand(object parameter)
