@@ -16,7 +16,14 @@ namespace CommandRunner
             var viewModel = DataContext as MainWindowViewModel;
             if (viewModel != null)
             {
-                viewModel.SelectedItem = e.NewValue as SelectionListItemViewModel;
+                if (e.NewValue is SelectionListItemViewModel selectedItem)
+                {
+                    viewModel.SelectedItem = selectedItem;
+                }
+                else if (e.NewValue is ProcessViewModel selectedProcess)
+                {
+                    viewModel.SelectedProcess = selectedProcess;
+                }
             }
         }
     }

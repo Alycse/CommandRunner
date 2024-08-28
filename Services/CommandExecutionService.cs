@@ -1,11 +1,14 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
+using System.Threading.Tasks;
 using CommandRunner.Models;
+using CommandRunner.ViewModels;
 
 namespace CommandRunner.Services
 {
     public class CommandExecutionService
     {
-        public void ExecuteCommand(Command command)
+        public async Task ExecuteCommandAsync(string name, Command command, Action<ProcessViewModel> onProcessStarted, Action<ProcessViewModel> onProcessCompleted, Action<string> onLogReceived)
         {
             if (command == null || string.IsNullOrWhiteSpace(command.FilePath))
                 return;
@@ -19,33 +22,52 @@ namespace CommandRunner.Services
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
                     UseShellExecute = false,
-                    CreateNoWindow = false
+                    CreateNoWindow = true
                 };
 
-                using (var process = new Process { StartInfo = processStartInfo })
+                var process = new Process { StartInfo = processStartInfo };
+
+                var processViewModel = new ProcessViewModel
                 {
-                    process.Start();
+                    Command = command,
+                    Name = name,
+                    Process = process // Assign the process here
+                };
 
-                    string output = process.StandardOutput.ReadToEnd();
-                    string error = process.StandardError.ReadToEnd();
+                onProcessStarted?.Invoke(processViewModel);
 
-                    process.WaitForExit();
-
-                    // Log or handle the output and errors as needed
-                    if (!string.IsNullOrEmpty(output))
+                process.OutputDataReceived += (sender, args) =>
+                {
+                    if (!string.IsNullOrEmpty(args.Data))
                     {
-                        // Handle output
+                        onLogReceived?.Invoke(args.Data);
                     }
+                };
 
-                    if (!string.IsNullOrEmpty(error))
+                process.ErrorDataReceived += (sender, args) =>
+                {
+                    if (!string.IsNullOrEmpty(args.Data))
                     {
-                        // Handle errors
+                        onLogReceived?.Invoke(args.Data);
                     }
-                }
+                };
+
+                process.Exited += (sender, args) =>
+                {
+                    onProcessCompleted?.Invoke(processViewModel);
+                    process.Dispose();
+                };
+
+                process.Start();
+
+                process.BeginOutputReadLine();
+                process.BeginErrorReadLine();
+
+                await Task.Run(() => process.WaitForExit());
             }
             catch (Exception ex)
             {
-                // Handle exceptions, log or display error messages
+                onLogReceived?.Invoke($"Error: {ex.Message}");
             }
         }
     }

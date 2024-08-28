@@ -38,7 +38,7 @@
         </ContextMenu>
         
         <ContextMenu x:Key="ProcessContextMenu">
-            <MenuItem Header="Remove" Command="{Binding Source={StaticResource MainViewModel}, Path=RemoveProcessCommand}"  CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+            <MenuItem Header="End Process" Command="{Binding Source={StaticResource MainViewModel}, Path=EndProcessCommand}"  CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
         </ContextMenu>
 
         <HierarchicalDataTemplate x:Key="ContainerTemplate" ItemsSource="{Binding Children}">
@@ -213,6 +213,7 @@
                   Background="#FF323232"
                   Margin="5"
                   Grid.Row="0"
+                  SelectedItemChanged="TreeView_SelectedItemChanged"
                   ItemTemplate="{StaticResource ProcessTemplate}">
             </TreeView>
         </Border>
@@ -221,8 +222,11 @@
 
         <!--Logs Section-->
         <Border Grid.Column="2" Grid.Row="2" Grid.ColumnSpan="3" Margin="3" BorderThickness="2" Background="#FF323232">
-            <TextBox Background="#FF424242" Foreground="Gainsboro" >
-            </TextBox>
+            <TextBox Background="#FF424242" Foreground="Gainsboro"
+         Text="{Binding LogText, Mode=OneWay}"
+         IsReadOnly="True"
+         VerticalScrollBarVisibility="Auto"
+         AcceptsReturn="True"/>
         </Border>
     </Grid>
 </Window>
