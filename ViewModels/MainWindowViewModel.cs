@@ -1,5 +1,6 @@
 ﻿using CommandRunner.Helpers;
 using CommandRunner.Models;
+using CommandRunner.Services;
 using CommandRunner.ViewModels;
 using Newtonsoft.Json;
 using System.Collections.ObjectModel;
@@ -12,6 +13,8 @@ namespace CommandRunner.ViewModels
     public class MainWindowViewModel : ViewModelBase
     {
         private const string SaveFilePath = "CommandsData.json";
+
+        private readonly CommandExecutionService _commandExecutionService;
 
         private SelectionListItemViewModel _selectedItem;
         private SelectionListCommandViewModel _temporaryCommand;
@@ -99,18 +102,22 @@ namespace CommandRunner.ViewModels
         public ICommand QueueCommand { get; set; }
         public ICommand SaveCommand { get; set; }
 
+        public ICommand RunQueueCommand { get; set; }
         public ICommand RemoveQueuedCommand { get; set; }
 
         public ObservableCollection<QueueListCommandViewModel> QueueListCommands { get; set; }
 
         public MainWindowViewModel()
         {
+            _commandExecutionService = new CommandExecutionService();
+
             NewCommandCommand = new RelayCommand(ExecuteNewCommand);
             NewContainerCommand = new RelayCommand(ExecuteNewContainer);
             MoveCommand = new RelayCommand(ExecuteMoveCommand);
             DeleteCommand = new RelayCommand(ExecuteDeleteCommand);
             QueueCommand = new RelayCommand(ExecuteQueueCommand);
             SaveCommand = new RelayCommand(ExecuteSaveCommand, param => IsCommandSelected || IsContainerSelected);
+            RunQueueCommand = new RelayCommand(ExecuteRunQueueCommand);
             RemoveQueuedCommand = new RelayCommand(ExecuteRemoveQueuedCommand);
 
             SelectionListItems = new ObservableCollection<SelectionListItemViewModel>();
@@ -182,6 +189,26 @@ namespace CommandRunner.ViewModels
             queueListCommand.Command = selectedCommand.Command;
 
             QueueListCommands.Add(queueListCommand);
+        }
+
+        private void ExecuteRunQueueCommand(object obj)
+        {
+            foreach (var queueListCommand in QueueListCommands)
+            {
+                Command command = queueListCommand.Command;
+                _commandExecutionService.ExecuteCommand(command);
+
+                if (command.CompleteUponExecution)
+                {
+                    // Mark the command as complete or handle it as needed
+                }
+
+                if (command.RemoveFromQueueUponCompletion)
+                {
+                    QueueListCommands.Remove(queueListCommand);
+                    break;
+                }
+            }
         }
 
         private void ExecuteRemoveQueuedCommand(object parameter)
