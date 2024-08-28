@@ -166,31 +166,31 @@
         <GridSplitter Grid.Column="3" Grid.Row="0" Width="3" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="#FF404040"/>
 
         <Border Grid.Column="4" Grid.Row="0" Margin="3" BorderThickness="2" Background="#FF323232">
-        </Border>
-
-        <GridSplitter Grid.Column="0" Grid.Row="1" Grid.ColumnSpan="5" Height="3" HorizontalAlignment="Stretch" VerticalAlignment="Center" Background="#FF404040"/>
-
-        <Border Grid.Column="0" Grid.Row="2" Grid.ColumnSpan="2" Margin="3" BorderThickness="2" Background="#FF323232">
             <Grid Margin="5">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="*" />
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
-                
+
                 <TreeView ItemsSource="{Binding QueueListCommands}" 
-                      Foreground="White" 
-                      BorderThickness="0" 
-                      Background="#FF323232"
-                      Margin="5"
-                      Grid.Row="0"
-                      ItemTemplate="{StaticResource QueuedCommandTemplate}">
+          Foreground="White" 
+          BorderThickness="0" 
+          Background="#FF323232"
+          Margin="5"
+          Grid.Row="0"
+          ItemTemplate="{StaticResource QueuedCommandTemplate}">
                 </TreeView>
-                
+
                 <StackPanel Margin="0,10,4,0" Orientation="Horizontal" VerticalAlignment="Bottom" Grid.Row="1" HorizontalAlignment="Center">
                     <Button Padding="25,5,25,5" Background="#FF424242" Foreground="Gainsboro" 
-                            Command="{Binding RunQueueCommand}">Run Queue</Button>
+                Command="{Binding RunQueueCommand}">Run Queue</Button>
                 </StackPanel>
             </Grid>
+        </Border>
+
+        <GridSplitter Grid.Column="0" Grid.Row="1" Grid.ColumnSpan="5" Height="3" HorizontalAlignment="Stretch" VerticalAlignment="Center" Background="#FF404040"/>
+
+        <Border Grid.Column="0" Grid.Row="2" Grid.ColumnSpan="2" Margin="3" BorderThickness="2" Background="#FF323232">
         </Border>
 
         <GridSplitter Grid.Column="1" Grid.Row="2" Width="3" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="#FF404040"/>
