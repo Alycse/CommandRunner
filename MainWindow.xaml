@@ -34,7 +34,11 @@
         </ContextMenu>
         
         <ContextMenu x:Key="QueuedCommandContextMenu">
-            <MenuItem Header="Remove" Command="{Binding Source={StaticResource MainViewModel}, Path=RemoveQueuedCommand}"  CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+            <MenuItem Header="Remove" Command="{Binding Source={StaticResource MainViewModel}, Path=RemoveQueuedCommandCommand}"  CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+        </ContextMenu>
+        
+        <ContextMenu x:Key="ProcessContextMenu">
+            <MenuItem Header="Remove" Command="{Binding Source={StaticResource MainViewModel}, Path=RemoveProcessCommand}"  CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
         </ContextMenu>
 
         <HierarchicalDataTemplate x:Key="ContainerTemplate" ItemsSource="{Binding Children}">
@@ -57,6 +61,14 @@
             <TextBlock Text="{Binding Name}" Foreground="#FFCACACA">
                 <TextBlock.ContextMenu>
                     <StaticResource ResourceKey="QueuedCommandContextMenu"/>
+                </TextBlock.ContextMenu>
+            </TextBlock>
+        </DataTemplate>
+        
+        <DataTemplate x:Key="ProcessTemplate">
+            <TextBlock Text="{Binding Name}" Foreground="#FFCACACA">
+                <TextBlock.ContextMenu>
+                    <StaticResource ResourceKey="ProcessContextMenu"/>
                 </TextBlock.ContextMenu>
             </TextBlock>
         </DataTemplate>
@@ -86,6 +98,7 @@
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
+        <!--Selection List Section-->
         <Border Grid.Column="0" Grid.Row="0" Margin="5" BorderThickness="2" Background="#FF323232">
             <TreeView ItemsSource="{Binding SelectionListItems}" 
                       Foreground="White" 
@@ -102,6 +115,7 @@
 
         <GridSplitter Grid.Column="1" Grid.Row="0" Width="3" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="#FF404040"/>
 
+        <!--Command Properties Section-->
         <Border Grid.Column="2" Grid.Row="0" Margin="3" BorderThickness="2" Background="#FF323232">
             <StackPanel Margin="5" Visibility="{Binding IsItemSelected, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <StackPanel Margin="4">
@@ -165,6 +179,7 @@
 
         <GridSplitter Grid.Column="3" Grid.Row="0" Width="3" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="#FF404040"/>
 
+        <!--Queued Commands Section-->
         <Border Grid.Column="4" Grid.Row="0" Margin="3" BorderThickness="2" Background="#FF323232">
             <Grid Margin="5">
                 <Grid.RowDefinitions>
@@ -173,12 +188,12 @@
                 </Grid.RowDefinitions>
 
                 <TreeView ItemsSource="{Binding QueueListCommands}" 
-          Foreground="White" 
-          BorderThickness="0" 
-          Background="#FF323232"
-          Margin="5"
-          Grid.Row="0"
-          ItemTemplate="{StaticResource QueuedCommandTemplate}">
+                  Foreground="White" 
+                  BorderThickness="0" 
+                  Background="#FF323232"
+                  Margin="5"
+                  Grid.Row="0"
+                  ItemTemplate="{StaticResource QueuedCommandTemplate}">
                 </TreeView>
 
                 <StackPanel Margin="0,10,4,0" Orientation="Horizontal" VerticalAlignment="Bottom" Grid.Row="1" HorizontalAlignment="Center">
@@ -190,12 +205,24 @@
 
         <GridSplitter Grid.Column="0" Grid.Row="1" Grid.ColumnSpan="5" Height="3" HorizontalAlignment="Stretch" VerticalAlignment="Center" Background="#FF404040"/>
 
+        <!--Process List Section-->
         <Border Grid.Column="0" Grid.Row="2" Grid.ColumnSpan="2" Margin="3" BorderThickness="2" Background="#FF323232">
+            <TreeView ItemsSource="{Binding ProcessListCommands}" 
+                  Foreground="White" 
+                  BorderThickness="0" 
+                  Background="#FF323232"
+                  Margin="5"
+                  Grid.Row="0"
+                  ItemTemplate="{StaticResource ProcessTemplate}">
+            </TreeView>
         </Border>
 
         <GridSplitter Grid.Column="1" Grid.Row="2" Width="3" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="#FF404040"/>
 
+        <!--Logs Section-->
         <Border Grid.Column="2" Grid.Row="2" Grid.ColumnSpan="3" Margin="3" BorderThickness="2" Background="#FF323232">
+            <TextBox Background="#FF424242" Foreground="Gainsboro" >
+            </TextBox>
         </Border>
     </Grid>
 </Window>

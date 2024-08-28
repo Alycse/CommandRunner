@@ -103,7 +103,9 @@ namespace CommandRunner.ViewModels
         public ICommand SaveCommand { get; set; }
 
         public ICommand RunQueueCommand { get; set; }
-        public ICommand RemoveQueuedCommand { get; set; }
+        public ICommand RemoveQueuedCommandCommand { get; set; }
+
+        public ICommand RemoveProcessCommand { get; set; }
 
         public ObservableCollection<QueueListCommandViewModel> QueueListCommands { get; set; }
 
@@ -118,7 +120,8 @@ namespace CommandRunner.ViewModels
             QueueCommand = new RelayCommand(ExecuteQueueCommand);
             SaveCommand = new RelayCommand(ExecuteSaveCommand, param => IsCommandSelected || IsContainerSelected);
             RunQueueCommand = new RelayCommand(ExecuteRunQueueCommand);
-            RemoveQueuedCommand = new RelayCommand(ExecuteRemoveQueuedCommand);
+            RemoveQueuedCommandCommand = new RelayCommand(ExecuteRemoveQueuedCommandCommand);
+            RemoveProcessCommand = new RelayCommand(ExecuteRemoveProcessCommand);
 
             SelectionListItems = new ObservableCollection<SelectionListItemViewModel>();
             QueueListCommands = new ObservableCollection<QueueListCommandViewModel>();
@@ -211,7 +214,7 @@ namespace CommandRunner.ViewModels
             }
         }
 
-        private void ExecuteRemoveQueuedCommand(object parameter)
+        private void ExecuteRemoveQueuedCommandCommand(object parameter)
         {
             var selectedQueuedCommand = parameter as QueueListCommandViewModel;
 
@@ -219,6 +222,11 @@ namespace CommandRunner.ViewModels
             {
                 QueueListCommands.Remove(selectedQueuedCommand);
             }
+        }
+
+        private void ExecuteRemoveProcessCommand(object obj)
+        {
+            throw new NotImplementedException();
         }
 
         private void ExecuteSaveCommand(object parameter)
