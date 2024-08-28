@@ -15,6 +15,7 @@
         <helpers:BooleanToBrushConverter x:Key="BooleanToBrushConverter"/>
         <helpers:CommandStateToBrushConverter x:Key="CommandStateToBrushConverter"/>
         <helpers:TrackAndContinueToIsEnabledConverter x:Key="TrackAndContinueToIsEnabledConverter"/>
+        <helpers:BooleanToExpandedConverter x:Key="BooleanToExpandedConverter"/>
 
         <ContextMenu x:Key="ContainerContextMenu">
             <MenuItem Header="New Command" Command="{Binding Source={StaticResource MainViewModel}, Path=NewCommandCommand}" CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
@@ -109,21 +110,47 @@
         <Border Grid.Column="0" Grid.Row="0" Margin="5,30,5,5" BorderThickness="2" Background="#FF323232">
             <Grid Margin="5">
                 <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Search by Text -->
+                <Label Grid.Row="0" Grid.Column="0" Content="Search by Text:" Foreground="Gainsboro" Margin="0,0,3,1" FontSize="10"/>
+                <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" 
+             Background="#FF424242" Foreground="Gainsboro" Margin="0,3,0,3" FontSize="10" Padding="2"/>
+
+                <!-- Search by Tags -->
+                <Label Grid.Row="1" Grid.Column="0" Content="Search by Tags:" Foreground="Gainsboro" Margin="0,0,3,1" FontSize="10"/>
+                <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding SearchTags, UpdateSourceTrigger=PropertyChanged}" 
+             Background="#FF424242" Foreground="Gainsboro" Margin="0,3,0,3" FontSize="10" Padding="2"/>
 
                 <!-- TreeView for Selection List -->
-                <TreeView ItemsSource="{Binding SelectionListItems}" 
-                          Foreground="White" 
-                          BorderThickness="0" 
-                          Background="#FF323232"
-                          Grid.Row="0"
-                          ItemTemplateSelector="{StaticResource SelectionListItemTemplateSelector}"
-                          SelectedItemChanged="TreeView_SelectedItemChanged">
-                    <TreeView.ContextMenu>
-                        <StaticResource ResourceKey="BackgroundContextMenu"/>
-                    </TreeView.ContextMenu>
-                </TreeView>
+                <Border Margin="5" BorderBrush="Gray" BorderThickness="1" Grid.Row="2" Grid.ColumnSpan="2">
+                    <TreeView ItemsSource="{Binding FilteredSelectionListItems}" 
+                  Margin="5"
+                  Foreground="White" 
+                  BorderThickness="0" 
+                  Background="#FF323232"
+                  ItemTemplateSelector="{StaticResource SelectionListItemTemplateSelector}"
+                  SelectedItemChanged="TreeView_SelectedItemChanged">
+                        <TreeView.ItemContainerStyle>
+                            <Style TargetType="TreeViewItem">
+                                <Setter Property="IsExpanded" 
+                            Value="{Binding DataContext.SearchText, 
+                            RelativeSource={RelativeSource AncestorType=Window}, 
+                            Converter={StaticResource BooleanToExpandedConverter}}"/>
+                            </Style>
+                        </TreeView.ItemContainerStyle>
+                        <TreeView.ContextMenu>
+                            <StaticResource ResourceKey="BackgroundContextMenu"/>
+                        </TreeView.ContextMenu>
+                    </TreeView>
+                </Border>
             </Grid>
         </Border>
 

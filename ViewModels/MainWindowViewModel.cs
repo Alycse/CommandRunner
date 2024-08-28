@@ -22,7 +22,34 @@ namespace CommandRunner.ViewModels
         private SelectionListContainerViewModel _temporaryContainer;
         private ProcessViewModel _selectedProcess;
 
+        private string _searchText;
+        private string _searchTags;
+
+        public string SearchText
+        {
+            get => _searchText;
+            set
+            {
+                _searchText = value;
+                OnPropertyChanged(nameof(SearchText));
+                ApplyFilter();
+            }
+        }
+
+        public string SearchTags
+        {
+            get => _searchTags;
+            set
+            {
+                _searchTags = value;
+                OnPropertyChanged(nameof(SearchTags));
+                ApplyFilter();
+            }
+        }
+
         public ObservableCollection<SelectionListItemViewModel> SelectionListItems { get; set; }
+        public ObservableCollection<SelectionListItemViewModel> FilteredSelectionListItems { get; private set; }
+
         public ObservableCollection<QueueListCommandViewModel> QueueListCommands { get; set; }
         public ObservableCollection<ProcessViewModel> ProcessList { get; set; }
 
@@ -147,12 +174,70 @@ namespace CommandRunner.ViewModels
             ClearLogCommand = new RelayCommand(ExecuteClearLogCommand, param => SelectedProcess != null);
 
             SelectionListItems = new ObservableCollection<SelectionListItemViewModel>();
+            FilteredSelectionListItems = new ObservableCollection<SelectionListItemViewModel>();
+
             QueueListCommands = new ObservableCollection<QueueListCommandViewModel>();
             ProcessList = new ObservableCollection<ProcessViewModel>();
 
             LoadData();
 
+            ApplyFilter();
+
             Application.Current.MainWindow.DataContext = this;
+        }
+
+        private void ApplyFilter()
+        {
+            var filteredItems = new ObservableCollection<SelectionListItemViewModel>();
+
+            foreach (var item in SelectionListItems)
+            {
+                if (item is SelectionListContainerViewModel container)
+                {
+                    var filteredChildren = container.Children
+                        .Where(c => FilterCommand(c as SelectionListCommandViewModel))
+                        .ToList();
+
+                    if (filteredChildren.Any())
+                    {
+                        var filteredContainer = new SelectionListContainerViewModel
+                        {
+                            Name = container.Name,
+                            Children = new ObservableCollection<SelectionListItemViewModel>(filteredChildren)
+                        };
+                        filteredItems.Add(filteredContainer);
+                    }
+                }
+                else if (item is SelectionListCommandViewModel command && FilterCommand(command))
+                {
+                    filteredItems.Add(command);
+                }
+            }
+
+            // If both search text boxes are empty, show all containers even if they're empty
+            if (string.IsNullOrWhiteSpace(SearchText) && string.IsNullOrWhiteSpace(SearchTags))
+            {
+                filteredItems = SelectionListItems;
+            }
+
+            FilteredSelectionListItems.Clear();
+            foreach (var filteredItem in filteredItems)
+            {
+                FilteredSelectionListItems.Add(filteredItem);
+            }
+
+            OnPropertyChanged(nameof(FilteredSelectionListItems));
+        }
+
+        private bool FilterCommand(SelectionListCommandViewModel command)
+        {
+            if (command == null)
+                return false;
+
+            var matchesText = string.IsNullOrWhiteSpace(SearchText) || command.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase);
+            var matchesTags = string.IsNullOrWhiteSpace(SearchTags) || (command.Command.Tags?.Contains(SearchTags, StringComparison.OrdinalIgnoreCase) ?? false);
+
+            return matchesText && matchesTags;
         }
 
         private void UpdateTemporaryItems()
