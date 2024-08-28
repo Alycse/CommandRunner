@@ -27,13 +27,11 @@ namespace CommandRunner.ViewModels
                     _selectedCommand = value;
                     if (_selectedCommand != null)
                     {
-                        // Create a temporary copy of the selected command's ViewModel
                         TemporaryCommand = new SelectionListCommandViewModel
                         {
                             Name = _selectedCommand.Name,
                             Command = new Command
                             {
-                                Name = _selectedCommand.Command.Name,
                                 FilePath = _selectedCommand.Command.FilePath,
                                 Argument = _selectedCommand.Command.Argument,
                                 Tags = _selectedCommand.Command.Tags,
@@ -93,7 +91,7 @@ namespace CommandRunner.ViewModels
             var newCommand = new SelectionListCommandViewModel
             {
                 Name = "New Command",
-                Command = new Command { Name = "New Command" }
+                Command = new Command()
             };
 
             if (parameter is SelectionListContainerViewModel)
@@ -150,7 +148,6 @@ namespace CommandRunner.ViewModels
             // Update the original command with the temporary ViewModel properties
             if (SelectedCommand != null && TemporaryCommand != null)
             {
-                SelectedCommand.Command.Name = TemporaryCommand.Command.Name;
                 SelectedCommand.Command.FilePath = TemporaryCommand.Command.FilePath;
                 SelectedCommand.Command.Argument = TemporaryCommand.Command.Argument;
                 SelectedCommand.Command.Tags = TemporaryCommand.Command.Tags;
