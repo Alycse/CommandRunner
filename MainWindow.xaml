@@ -12,6 +12,8 @@
     <Window.Resources>
         <vm:MainWindowViewModel x:Key="MainViewModel"/>
         <helpers:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        <helpers:BooleanToBrushConverter x:Key="BooleanToBrushConverter"/>
+        <helpers:CommandStateToBrushConverter x:Key="CommandStateToBrushConverter"/>
 
         <ContextMenu x:Key="ContainerContextMenu">
             <MenuItem Header="New Command" Command="{Binding Source={StaticResource MainViewModel}, Path=NewCommandCommand}" CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
@@ -36,9 +38,10 @@
         <ContextMenu x:Key="QueuedCommandContextMenu">
             <MenuItem Header="Remove" Command="{Binding Source={StaticResource MainViewModel}, Path=RemoveQueuedCommandCommand}"  CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
         </ContextMenu>
-        
+
         <ContextMenu x:Key="ProcessContextMenu">
-            <MenuItem Header="End Process" Command="{Binding Source={StaticResource MainViewModel}, Path=EndProcessCommand}"  CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+            <MenuItem Header="End Process" Command="{Binding Source={StaticResource MainViewModel}, Path=EndProcessCommand}" CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+            <MenuItem Header="Remove" Command="{Binding Source={StaticResource MainViewModel}, Path=RemoveProcessCommand}" CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
         </ContextMenu>
 
         <HierarchicalDataTemplate x:Key="ContainerTemplate" ItemsSource="{Binding Children}">
@@ -58,15 +61,17 @@
         </DataTemplate>
 
         <DataTemplate x:Key="QueuedCommandTemplate">
-            <TextBlock Text="{Binding Name}" Foreground="#FFCACACA">
+            <TextBlock Text="{Binding Name}" Foreground="#FFCACACA"
+               Background="{Binding State, Converter={StaticResource CommandStateToBrushConverter}}">
                 <TextBlock.ContextMenu>
                     <StaticResource ResourceKey="QueuedCommandContextMenu"/>
                 </TextBlock.ContextMenu>
             </TextBlock>
         </DataTemplate>
-        
+
         <DataTemplate x:Key="ProcessTemplate">
-            <TextBlock Text="{Binding Name}" Foreground="#FFCACACA">
+            <TextBlock Text="{Binding Name}" Foreground="#FFCACACA"
+               Background="{Binding IsEnded, Converter={StaticResource BooleanToBrushConverter}, ConverterParameter=Red}">
                 <TextBlock.ContextMenu>
                     <StaticResource ResourceKey="ProcessContextMenu"/>
                 </TextBlock.ContextMenu>

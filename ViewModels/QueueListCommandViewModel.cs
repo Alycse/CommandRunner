@@ -1,31 +1,55 @@
 ﻿using CommandRunner.Models;
+using CommandRunner.ViewModels;
 
-namespace CommandRunner.ViewModels
+public enum CommandState
 {
-    public class QueueListCommandViewModel : ViewModelBase
+    Queued,
+    Running,
+    Completed,
+    Error
+}
+
+public class QueueListCommandViewModel : ViewModelBase
+{
+    private Command _command;
+    private string _name;
+    private CommandState _state;
+
+    public Command Command
     {
-        private Command _command;
-
-        public Command Command
+        get => _command;
+        set
         {
-            get => _command;
-            set
+            _command = value;
+            OnPropertyChanged(nameof(Command));
+        }
+    }
+
+    public string Name
+    {
+        get => _name;
+        set
+        {
+            _name = value;
+            OnPropertyChanged(nameof(Name));
+        }
+    }
+
+    public CommandState State
+    {
+        get => _state;
+        set
+        {
+            if (_state != value)
             {
-                _command = value;
-                OnPropertyChanged(nameof(Command));
+                _state = value;
+                OnPropertyChanged(nameof(State));
             }
         }
+    }
 
-        private string _name;
-
-        public string Name
-        {
-            get => _name;
-            set
-            {
-                _name = value;
-                OnPropertyChanged(nameof(Name));
-            }
-        }
+    public QueueListCommandViewModel()
+    {
+        State = CommandState.Queued;
     }
 }

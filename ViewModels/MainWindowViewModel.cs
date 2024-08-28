@@ -99,6 +99,7 @@ namespace CommandRunner.ViewModels
         public ICommand RunQueueCommand { get; set; }
         public ICommand RemoveQueuedCommandCommand { get; set; }
         public ICommand EndProcessCommand { get; set; }
+        public ICommand RemoveProcessCommand { get; set; }
 
         public MainWindowViewModel()
         {
@@ -113,6 +114,7 @@ namespace CommandRunner.ViewModels
             RunQueueCommand = new RelayCommand(async obj => await ExecuteRunQueueCommand());
             RemoveQueuedCommandCommand = new RelayCommand(ExecuteRemoveQueuedCommandCommand);
             EndProcessCommand = new RelayCommand(ExecuteEndProcessCommand);
+            RemoveProcessCommand = new RelayCommand(ExecuteRemoveProcessCommand);
 
             SelectionListItems = new ObservableCollection<SelectionListItemViewModel>();
             QueueListCommands = new ObservableCollection<QueueListCommandViewModel>();
@@ -227,48 +229,67 @@ namespace CommandRunner.ViewModels
 
         private async Task ExecuteRunQueueCommand()
         {
-            bool firstProcessSelected = false;
-
-            foreach (var queueListCommand in QueueListCommands.ToList()) // Clone the list to allow modifications
+            foreach (var queueListCommand in QueueListCommands.ToList())
             {
                 var command = queueListCommand.Command;
                 var commandName = queueListCommand.Name;
+
+                queueListCommand.State = CommandState.Running;
+
+                ProcessViewModel currentProcessViewModel = null;
 
                 await _commandExecutionService.ExecuteCommandAsync(
                     commandName,
                     command,
                     processViewModel =>
                     {
+                        currentProcessViewModel = processViewModel;
                         ProcessList.Add(processViewModel);
 
-                        // Automatically select the first process that starts running
-                        if (!firstProcessSelected)
-                        {
-                            SelectedProcess = processViewModel;
-                            firstProcessSelected = true;
-                        }
+                        // Automatically select the process that starts running
+                        SelectedProcess = processViewModel;
                     },
                     processViewModel =>
                     {
-                        ProcessList.Remove(processViewModel);
-                        if (command.RemoveFromQueueUponCompletion)
+                        Application.Current.Dispatcher.Invoke(() =>
                         {
-                            QueueListCommands.Remove(queueListCommand);
-                        }
+                            if (command.RemoveFromQueueUponCompletion || command.CompleteUponExecution)
+                            {
+                                queueListCommand.State = CommandState.Completed;
+                                QueueListCommands.Remove(queueListCommand);
+                            }
+                            else
+                            {
+                                processViewModel.Process.WaitForExit(); // Ensure process is closed/terminated
+                                queueListCommand.State = CommandState.Completed;
+                            }
+
+                            // Force UI refresh for the queue
+                            OnPropertyChanged(nameof(QueueListCommands));
+                        });
                     },
                     logMessage =>
                     {
-                        // This ensures logs are always appended to the currently selected process
-                        SelectedProcess?.AppendLog(logMessage);
+                        // Ensure logs are appended to the current process's log
+                        currentProcessViewModel?.AppendLog(logMessage);
 
                         // Trigger the update of LogText binding
-                        OnPropertyChanged(nameof(LogText));
+                        if (SelectedProcess == currentProcessViewModel)
+                        {
+                            OnPropertyChanged(nameof(LogText));
+                        }
+
+                        if (logMessage.Contains("Error")) // Simplified error detection
+                        {
+                            queueListCommand.State = CommandState.Error;
+                        }
                     }
                 );
 
-                if (command.CompleteUponExecution)
+                if (queueListCommand.State != CommandState.Completed && queueListCommand.State != CommandState.Error)
                 {
-                    // Handle completion if necessary
+                    // Wait for process to complete unless it's set to complete upon execution
+                    await Task.Run(() => queueListCommand.Command.CompleteUponExecution);
                 }
             }
         }
@@ -287,18 +308,21 @@ namespace CommandRunner.ViewModels
             {
                 try
                 {
-                    // Assuming you have a way to track the actual process in ProcessViewModel
-                    // For instance, add a Process property to ProcessViewModel:
-                    // public Process Process { get; set; }
-
                     selectedProcess?.Process?.Kill(); // Terminate the process
-                    ProcessList.Remove(selectedProcess);
+                    selectedProcess.IsEnded = true; // Mark it as ended
                 }
                 catch (Exception ex)
                 {
-                    // Handle the exception (e.g., logging, showing a message to the user, etc.)
                     selectedProcess.AppendLog($"Error ending process: {ex.Message}");
                 }
+            }
+        }
+
+        private void ExecuteRemoveProcessCommand(object parameter)
+        {
+            if (parameter is ProcessViewModel selectedProcess)
+            {
+                ProcessList.Remove(selectedProcess); // Remove the process from the list
             }
         }
 

@@ -1,58 +1,67 @@
-﻿using System.Diagnostics;
-using CommandRunner.Models;
+﻿using CommandRunner.Models;
+using CommandRunner.ViewModels;
+using System.Diagnostics;
 
-namespace CommandRunner.ViewModels
+public class ProcessViewModel : ViewModelBase
 {
-    public class ProcessViewModel : ViewModelBase
+    private Command _command;
+    private string _name;
+    private string _logText;
+    private Process _process;
+    private bool _isEnded;
+
+    public Command Command
     {
-        private Command _command;
-        private string _name;
-        private string _logText;
-        private Process _process; // New
-
-        public Command Command
+        get => _command;
+        set
         {
-            get => _command;
-            set
-            {
-                _command = value;
-                OnPropertyChanged(nameof(Command));
-            }
+            _command = value;
+            OnPropertyChanged(nameof(Command));
         }
+    }
 
-        public string Name
+    public string Name
+    {
+        get => _name;
+        set
         {
-            get => _name;
-            set
-            {
-                _name = value;
-                OnPropertyChanged(nameof(Name));
-            }
+            _name = value;
+            OnPropertyChanged(nameof(Name));
         }
+    }
 
-        public string LogText
+    public string LogText
+    {
+        get => _logText;
+        set
         {
-            get => _logText;
-            set
-            {
-                _logText = value;
-                OnPropertyChanged(nameof(LogText));
-            }
+            _logText = value;
+            OnPropertyChanged(nameof(LogText));
         }
+    }
 
-        public Process Process // New
+    public Process Process
+    {
+        get => _process;
+        set
         {
-            get => _process;
-            set
-            {
-                _process = value;
-                OnPropertyChanged(nameof(Process));
-            }
+            _process = value;
+            OnPropertyChanged(nameof(Process));
         }
+    }
 
-        public void AppendLog(string log)
+    public bool IsEnded
+    {
+        get => _isEnded;
+        set
         {
-            LogText += log + "\n";
+            _isEnded = value;
+            OnPropertyChanged(nameof(IsEnded));
         }
+    }
+
+    public void AppendLog(string log)
+    {
+        LogText += log + "\n";
     }
 }

@@ -25,13 +25,13 @@ namespace CommandRunner.Services
                     CreateNoWindow = true
                 };
 
-                var process = new Process { StartInfo = processStartInfo };
+                var process = new Process { StartInfo = processStartInfo, EnableRaisingEvents = true };
 
                 var processViewModel = new ProcessViewModel
                 {
                     Command = command,
                     Name = name,
-                    Process = process // Assign the process here
+                    Process = process
                 };
 
                 onProcessStarted?.Invoke(processViewModel);
@@ -54,6 +54,7 @@ namespace CommandRunner.Services
 
                 process.Exited += (sender, args) =>
                 {
+                    processViewModel.IsEnded = true; // Mark as ended
                     onProcessCompleted?.Invoke(processViewModel);
                     process.Dispose();
                 };
