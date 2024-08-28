@@ -61,6 +61,9 @@
 
         <DataTemplate x:Key="CommandTemplate">
             <TextBlock Text="{Binding Name}" Foreground="#FFCACACA">
+                <TextBlock.InputBindings>
+                    <MouseBinding Gesture="LeftDoubleClick" Command="{Binding DataContext.QueueCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" />
+                </TextBlock.InputBindings>
                 <TextBlock.ContextMenu>
                     <StaticResource ResourceKey="CommandContextMenu"/>
                 </TextBlock.ContextMenu>
