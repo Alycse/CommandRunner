@@ -145,6 +145,7 @@ namespace CommandRunner.ViewModels
                         FilePath = command.Command.FilePath,
                         Argument = command.Command.Argument,
                         Tags = command.Command.Tags,
+                        TrackProcess = command.Command.TrackProcess,
                         ContinueUponExecution = command.Command.ContinueUponExecution
                     }
                 };
@@ -259,31 +260,35 @@ namespace CommandRunner.ViewModels
                     processViewModel =>
                     {
                         currentProcessViewModel = processViewModel;
-                        ProcessList.Add(processViewModel);
-
-                        SelectedProcess = processViewModel;
+                        if (command.TrackProcess)
+                        {
+                            ProcessList.Add(processViewModel);
+                            SelectedProcess = processViewModel;
+                        }
                     },
                     processViewModel =>
                     {
                         Application.Current.Dispatcher.Invoke(() =>
                         {
-                            processViewModel.Process.WaitForExit();
                             queueListCommand.State = CommandState.Completed;
                             OnPropertyChanged(nameof(QueueListCommands));
                         });
                     },
                     logMessage =>
                     {
-                        currentProcessViewModel?.AppendLog(logMessage);
-
-                        if (SelectedProcess == currentProcessViewModel)
+                        if (command.TrackProcess)
                         {
-                            OnPropertyChanged(nameof(LogText));
-                        }
+                            currentProcessViewModel?.AppendLog(logMessage);
 
-                        if (logMessage.Contains("Error"))
-                        {
-                            queueListCommand.State = CommandState.Error;
+                            if (SelectedProcess == currentProcessViewModel)
+                            {
+                                OnPropertyChanged(nameof(LogText));
+                            }
+
+                            if (logMessage.Contains("Error"))
+                            {
+                                queueListCommand.State = CommandState.Error;
+                            }
                         }
                     }
                 );
@@ -387,6 +392,7 @@ namespace CommandRunner.ViewModels
                     selectedCommand.Command.FilePath = TemporaryCommand.Command.FilePath;
                     selectedCommand.Command.Argument = TemporaryCommand.Command.Argument;
                     selectedCommand.Command.Tags = TemporaryCommand.Command.Tags;
+                    selectedCommand.Command.TrackProcess = TemporaryCommand.Command.TrackProcess;
                     selectedCommand.Command.ContinueUponExecution = TemporaryCommand.Command.ContinueUponExecution;
                     selectedCommand.Name = TemporaryCommand.Name;
                 }

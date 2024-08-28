@@ -19,56 +19,81 @@ namespace CommandRunner.Services
                 {
                     FileName = command.FilePath,
                     Arguments = command.Argument,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true
+                    RedirectStandardOutput = command.TrackProcess,  // Only redirect output if tracking
+                    RedirectStandardError = command.TrackProcess,   // Only redirect error if tracking
+                    UseShellExecute = !command.TrackProcess,        // Use shell execute if not tracking
+                    CreateNoWindow = command.TrackProcess           // Show window only if not tracking
                 };
 
                 var process = new Process { StartInfo = processStartInfo, EnableRaisingEvents = true };
 
-                var processViewModel = new ProcessViewModel
-                {
-                    Command = command,
-                    Name = name,
-                    Process = process
-                };
+                ProcessViewModel processViewModel = null;
 
-                onProcessStarted?.Invoke(processViewModel);
-
-                process.OutputDataReceived += (sender, args) =>
+                if (command.TrackProcess)
                 {
-                    if (!string.IsNullOrEmpty(args.Data))
+                    processViewModel = new ProcessViewModel
                     {
-                        onLogReceived?.Invoke(args.Data);
-                    }
-                };
+                        Command = command,
+                        Name = name,
+                        Process = process
+                    };
 
-                process.ErrorDataReceived += (sender, args) =>
-                {
-                    if (!string.IsNullOrEmpty(args.Data))
+                    onProcessStarted?.Invoke(processViewModel);
+
+                    process.OutputDataReceived += (sender, args) =>
                     {
-                        onLogReceived?.Invoke(args.Data);
-                    }
-                };
+                        if (!string.IsNullOrEmpty(args.Data))
+                        {
+                            onLogReceived?.Invoke(args.Data);
+                        }
+                    };
+
+                    process.ErrorDataReceived += (sender, args) =>
+                    {
+                        if (!string.IsNullOrEmpty(args.Data))
+                        {
+                            onLogReceived?.Invoke(args.Data);
+                        }
+                    };
+                }
 
                 process.Exited += (sender, args) =>
                 {
-                    processViewModel.IsEnded = true; // Mark as ended
-                    onProcessCompleted?.Invoke(processViewModel);
+                    if (command.TrackProcess)
+                    {
+                        processViewModel.IsEnded = true; // Mark as ended
+                        onProcessCompleted?.Invoke(processViewModel);
+                    }
                     process.Dispose();
                 };
 
                 process.Start();
 
-                process.BeginOutputReadLine();
-                process.BeginErrorReadLine();
+                if (command.TrackProcess)
+                {
+                    process.BeginOutputReadLine();
+                    process.BeginErrorReadLine();
+                }
 
                 await Task.Run(() => process.WaitForExit());
+
+                if (!command.TrackProcess)
+                {
+                    // Command executed without tracking, do nothing further
+                    onLogReceived?.Invoke($"Command '{name}' executed and completed without tracking.");
+                }
             }
             catch (Exception ex)
             {
-                onLogReceived?.Invoke($"Error: {ex.Message}");
+                if (command.TrackProcess || string.IsNullOrWhiteSpace(command.FilePath))
+                {
+                    onLogReceived?.Invoke($"Error: {ex.Message}");
+                }
+                else
+                {
+                    // If not tracking and an error occurs, just write a basic error message
+                    onLogReceived?.Invoke($"Command '{name}' execution failed.");
+                }
             }
         }
     }
