@@ -17,8 +17,8 @@ namespace CommandRunner.Services
             // Declare processViewModel at the start of the method
             ProcessViewModel processViewModel = null;
 
-            // Task completion source to signal when the log is detected
-            var logDetected = new TaskCompletionSource<bool>();
+            // Task completion source to signal when the log is detected (only if LogToDetectBeforeContinuing is not empty)
+            TaskCompletionSource<bool> logDetected = null;
 
             // Initialize the logTextChangedHandler here so it's in scope
             EventHandler logTextChangedHandler = null;
@@ -40,13 +40,18 @@ namespace CommandRunner.Services
 
                 var process = new Process { StartInfo = processStartInfo, EnableRaisingEvents = true };
 
-                logTextChangedHandler = (sender, args) =>
+                if (!string.IsNullOrWhiteSpace(command.LogToDetectBeforeContinuing))
                 {
-                    if (processViewModel != null && processViewModel.LogText.Contains(command.LogToDetectBeforeContinuing))
+                    logDetected = new TaskCompletionSource<bool>();
+
+                    logTextChangedHandler = (sender, args) =>
                     {
-                        logDetected.TrySetResult(true);
-                    }
-                };
+                        if (processViewModel != null && processViewModel.LogText.Contains(command.LogToDetectBeforeContinuing))
+                        {
+                            logDetected.TrySetResult(true);
+                        }
+                    };
+                }
 
                 if (command.TrackProcess)
                 {
@@ -57,7 +62,10 @@ namespace CommandRunner.Services
                         Process = process
                     };
 
-                    processViewModel.OnLogTextChanged += logTextChangedHandler;
+                    if (logTextChangedHandler != null)
+                    {
+                        processViewModel.OnLogTextChanged += logTextChangedHandler;
+                    }
 
                     onProcessStarted?.Invoke(processViewModel);
 
@@ -96,11 +104,19 @@ namespace CommandRunner.Services
                     process.BeginErrorReadLine();
                 }
 
-                // Await process completion or log detection
-                await Task.WhenAny(Task.Run(() => process.WaitForExit()), logDetected.Task);
+                // Await process completion or log detection (only if LogToDetectBeforeContinuing is not empty)
+                if (logDetected != null)
+                {
+                    await Task.WhenAny(Task.Run(() => process.WaitForExit()), logDetected.Task);
+                }
+                else
+                {
+                    // Normal detection of process completion
+                    await Task.Run(() => process.WaitForExit());
+                }
 
-                // Invoke completion event if log was detected
-                if (logDetected.Task.IsCompleted && processViewModel != null)
+                // Invoke completion event if log was detected or process exited normally
+                if (logDetected == null || logDetected.Task.IsCompleted)
                 {
                     onProcessCompleted?.Invoke(processViewModel);
                 }
@@ -120,7 +136,7 @@ namespace CommandRunner.Services
             finally
             {
                 // Ensure event handler is removed to prevent memory leaks
-                if (processViewModel != null)
+                if (processViewModel != null && logTextChangedHandler != null)
                 {
                     processViewModel.OnLogTextChanged -= logTextChangedHandler;
                 }

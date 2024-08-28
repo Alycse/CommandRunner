@@ -14,6 +14,7 @@
         <helpers:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
         <helpers:BooleanToBrushConverter x:Key="BooleanToBrushConverter"/>
         <helpers:CommandStateToBrushConverter x:Key="CommandStateToBrushConverter"/>
+        <helpers:TrackAndContinueToIsEnabledConverter x:Key="TrackAndContinueToIsEnabledConverter"/>
 
         <ContextMenu x:Key="ContainerContextMenu">
             <MenuItem Header="New Command" Command="{Binding Source={StaticResource MainViewModel}, Path=NewCommandCommand}" CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
@@ -188,9 +189,16 @@
                 <StackPanel Margin="4,6,0,0" Visibility="{Binding IsCommandSelected, Converter={StaticResource BooleanToVisibilityConverter}}">
                     <Label Content="Log to detect before continuing" Foreground="Gainsboro"/>
                     <TextBox Text="{Binding TemporaryCommand.Command.LogToDetectBeforeContinuing, UpdateSourceTrigger=PropertyChanged}" 
-                             Background="#FF424242" 
-                             Foreground="Gainsboro" 
-                             Margin="5,0,2,0"/>
+             Background="#FF424242" 
+             Foreground="Gainsboro"
+             Margin="5,0,2,0">
+                        <TextBox.IsEnabled>
+                            <MultiBinding Converter="{StaticResource TrackAndContinueToIsEnabledConverter}">
+                                <Binding Path="TemporaryCommand.Command.TrackProcess" />
+                                <Binding Path="TemporaryCommand.Command.ContinueUponExecution" />
+                            </MultiBinding>
+                        </TextBox.IsEnabled>
+                    </TextBox>
                 </StackPanel>
 
                 <StackPanel Margin="0,20,4,0" Orientation="Horizontal" HorizontalAlignment="Right">

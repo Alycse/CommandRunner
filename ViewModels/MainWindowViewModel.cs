@@ -1,4 +1,5 @@
 ﻿using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -71,8 +72,29 @@ namespace CommandRunner.ViewModels
             get => _temporaryCommand;
             set
             {
+                if (_temporaryCommand != null)
+                {
+                    // Unsubscribe from previous event handlers
+                    _temporaryCommand.PropertyChanged -= CommandPropertyChanged;
+                }
+
                 _temporaryCommand = value;
+
+                if (_temporaryCommand != null)
+                {
+                    // Subscribe to new event handlers
+                    _temporaryCommand.PropertyChanged += CommandPropertyChanged;
+                }
+
                 OnPropertyChanged(nameof(TemporaryCommand));
+            }
+        }
+
+        private void CommandPropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(Command.TrackProcess) || e.PropertyName == nameof(Command.ContinueUponExecution))
+            {
+                UpdateLogToDetectBeforeContinuing();
             }
         }
 
@@ -328,6 +350,19 @@ namespace CommandRunner.ViewModels
                     {
                         queueListCommand.State = CommandState.Completed;
                     }
+                }
+            }
+        }
+
+        private void UpdateLogToDetectBeforeContinuing()
+        {
+            if (TemporaryCommand != null)
+            {
+                // If TrackProcess is false or ContinueUponExecution is true, clear the LogToDetectBeforeContinuing
+                if (!TemporaryCommand.Command.TrackProcess || TemporaryCommand.Command.ContinueUponExecution)
+                {
+                    TemporaryCommand.Command.LogToDetectBeforeContinuing = string.Empty;
+                    OnPropertyChanged(nameof(TemporaryCommand)); // Notify the UI to update the TextBox
                 }
             }
         }
