@@ -22,13 +22,17 @@
             <MenuItem Header="New Command" Command="{Binding Source={StaticResource MainViewModel}, Path=NewCommandCommand}" CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
             <MenuItem Header="New Container" Command="{Binding Source={StaticResource MainViewModel}, Path=NewContainerCommand}" CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
             <Separator/>
+            <MenuItem Header="Queue All" Command="{Binding Source={StaticResource MainViewModel}, Path=QueueAllCommand}" CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+            <Separator/>
             <MenuItem Header="Move" Command="{Binding Source={StaticResource MainViewModel}, Path=MoveCommand}" CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
             <MenuItem Header="Delete" Command="{Binding Source={StaticResource MainViewModel}, Path=DeleteCommand}" CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+            <MenuItem Header="Duplicate" Command="{Binding Source={StaticResource MainViewModel}, Path=DuplicateContainerCommand}" CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
         </ContextMenu>
 
         <ContextMenu x:Key="CommandContextMenu">
             <MenuItem Header="Queue" Command="{Binding Source={StaticResource MainViewModel}, Path=QueueCommand}"  CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
             <Separator/>
+            <MenuItem Header="Duplicate" Command="{Binding Source={StaticResource MainViewModel}, Path=DuplicateCommandCommand}" CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
             <MenuItem Header="Move" Command="{Binding Source={StaticResource MainViewModel}, Path=MoveCommand}"  CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
             <MenuItem Header="Delete" Command="{Binding Source={StaticResource MainViewModel}, Path=DeleteCommand}"  CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
         </ContextMenu>

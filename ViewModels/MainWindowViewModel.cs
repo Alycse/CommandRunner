@@ -166,6 +166,9 @@ namespace CommandRunner.ViewModels
         public ICommand ClearEndedProcessesCommand { get; set; }
         public ICommand EndAllProcessesCommand { get; set; }
         public ICommand ClearLogCommand { get; set; }
+        public ICommand DuplicateContainerCommand { get; set; }
+        public ICommand DuplicateCommandCommand { get; set; }
+        public ICommand QueueAllCommand { get; set; }
 
         public MainWindowViewModel()
         {
@@ -185,6 +188,9 @@ namespace CommandRunner.ViewModels
             ClearEndedProcessesCommand = new RelayCommand(ExecuteClearEndedProcessesCommand);
             EndAllProcessesCommand = new RelayCommand(ExecuteEndAllProcessesCommand);
             ClearLogCommand = new RelayCommand(ExecuteClearLogCommand, param => SelectedProcess != null);
+            DuplicateContainerCommand = new RelayCommand(ExecuteDuplicateContainer);
+            DuplicateCommandCommand = new RelayCommand(ExecuteDuplicateCommand);
+            QueueAllCommand = new RelayCommand(ExecuteQueueAllCommand);
 
             SelectionListItems = new ObservableCollection<SelectionListItemViewModel>();
             FilteredSelectionListItems = new ObservableCollection<SelectionListItemViewModel>();
@@ -197,6 +203,176 @@ namespace CommandRunner.ViewModels
             ApplyFilter();
 
             Application.Current.MainWindow.DataContext = this;
+        }
+
+        private void ExecuteQueueAllCommand(object parameter)
+        {
+            if (parameter is SelectionListContainerViewModel container)
+            {
+                foreach (var item in container.Children)
+                {
+                    if (item is SelectionListCommandViewModel command)
+                    {
+                        ExecuteQueueCommand(command);
+                    }
+                }
+            }
+        }
+
+        private void ExecuteDuplicateContainer(object parameter)
+        {
+            if (parameter is SelectionListContainerViewModel container)
+            {
+                var duplicateContainer = new SelectionListContainerViewModel
+                {
+                    Name = $"{container.Name} - Duplicate",
+                    Children = new ObservableCollection<SelectionListItemViewModel>(
+                        container.Children.Select(child => DuplicateItem(child))
+                    )
+                };
+
+                InsertDuplicate(container, duplicateContainer);
+                SaveAllData();
+            }
+        }
+
+        private void ExecuteDuplicateCommand(object parameter)
+        {
+            if (parameter is SelectionListCommandViewModel command)
+            {
+                var duplicateCommand = new SelectionListCommandViewModel
+                {
+                    Name = $"{command.Name} - Duplicate",
+                    Command = new Command
+                    {
+                        FilePath = command.Command.FilePath,
+                        Argument = command.Command.Argument,
+                        Tags = command.Command.Tags,
+                        TrackProcess = command.Command.TrackProcess,
+                        ContinueUponExecution = command.Command.ContinueUponExecution,
+                        LogToDetectBeforeContinuing = command.Command.LogToDetectBeforeContinuing
+                    }
+                };
+
+                InsertDuplicate(command, duplicateCommand);
+                SaveAllData();
+            }
+        }
+
+        private SelectionListItemViewModel DuplicateItem(SelectionListItemViewModel item)
+        {
+            switch (item)
+            {
+                case SelectionListContainerViewModel container:
+                    return new SelectionListContainerViewModel
+                    {
+                        Name = $"{container.Name} - Duplicate",
+                        Children = new ObservableCollection<SelectionListItemViewModel>(
+                            container.Children.Select(child => DuplicateItem(child))
+                        )
+                    };
+                case SelectionListCommandViewModel command:
+                    return new SelectionListCommandViewModel
+                    {
+                        Name = $"{command.Name} - Duplicate",
+                        Command = new Command
+                        {
+                            FilePath = command.Command.FilePath,
+                            Argument = command.Command.Argument,
+                            Tags = command.Command.Tags,
+                            TrackProcess = command.Command.TrackProcess,
+                            ContinueUponExecution = command.Command.ContinueUponExecution,
+                            LogToDetectBeforeContinuing = command.Command.LogToDetectBeforeContinuing
+                        }
+                    };
+                default:
+                    return null;
+            }
+        }
+
+        private void InsertDuplicate(SelectionListItemViewModel original, SelectionListItemViewModel duplicate)
+        {
+            ObservableCollection<SelectionListItemViewModel> targetCollection = null;
+
+            // Determine the collection where the original item resides
+            foreach (var item in SelectionListItems)
+            {
+                if (item == original)
+                {
+                    targetCollection = SelectionListItems;
+                    break;
+                }
+                if (item is SelectionListContainerViewModel container && container.Children.Contains(original))
+                {
+                    targetCollection = container.Children;
+                    break;
+                }
+            }
+
+            if (targetCollection != null)
+            {
+                var index = targetCollection.IndexOf(original) + 1;
+                targetCollection.Insert(index, duplicate);
+            }
+        }
+
+        private void ExecuteDeleteCommand(object parameter)
+        {
+            if (parameter is SelectionListItemViewModel itemToDelete)
+            {
+                RemoveItem(itemToDelete);
+                SaveAllData();
+            }
+        }
+
+        private void RemoveItem(SelectionListItemViewModel item)
+        {
+            ObservableCollection<SelectionListItemViewModel> parentCollection = null;
+
+            // Determine the collection where the item resides
+            foreach (var rootItem in SelectionListItems)
+            {
+                if (rootItem == item)
+                {
+                    parentCollection = SelectionListItems;
+                    break;
+                }
+                if (rootItem is SelectionListContainerViewModel container && container.Children.Contains(item))
+                {
+                    parentCollection = container.Children;
+                    break;
+                }
+
+                // Handle nested containers
+                if (rootItem is SelectionListContainerViewModel nestedContainer)
+                {
+                    parentCollection = FindAndRemoveFromNestedContainer(nestedContainer.Children, item);
+                    if (parentCollection != null)
+                        break;
+                }
+            }
+
+            // Remove the item from the collection
+            parentCollection?.Remove(item);
+        }
+
+        private ObservableCollection<SelectionListItemViewModel> FindAndRemoveFromNestedContainer(
+            ObservableCollection<SelectionListItemViewModel> items, SelectionListItemViewModel itemToRemove)
+        {
+            foreach (var item in items)
+            {
+                if (item == itemToRemove)
+                {
+                    return items;
+                }
+                if (item is SelectionListContainerViewModel container)
+                {
+                    var result = FindAndRemoveFromNestedContainer(container.Children, itemToRemove);
+                    if (result != null)
+                        return result;
+                }
+            }
+            return null;
         }
 
         private void ApplyFilter()
@@ -329,12 +505,7 @@ namespace CommandRunner.ViewModels
 
         private void ExecuteMoveCommand(object parameter)
         {
-            // Implement your logic here
-        }
-
-        private void ExecuteDeleteCommand(object parameter)
-        {
-            // Implement your logic here
+            // Unimplemented
         }
 
         private void ExecuteQueueCommand(object parameter)
